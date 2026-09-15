@@ -7,33 +7,48 @@ import type { Transition, Variants } from "framer-motion";
  * lean on short durations and snap/blade easings rather than spring bounce.
  */
 
+/** Raw curves, exported so keyframe animations can reuse the same easing. */
+export const EASE_SNAP = [0.22, 1, 0.36, 1] as const;
+export const EASE_BLADE = [0.65, 0, 0.35, 1] as const;
+
 export const SNAP: Transition = {
   duration: 0.22,
-  ease: [0.22, 1, 0.36, 1],
+  ease: EASE_SNAP,
 };
 
 export const BLADE: Transition = {
   duration: 0.35,
-  ease: [0.65, 0, 0.35, 1],
+  ease: EASE_BLADE,
 };
 
-/** Diagonal slice wipe used for tab-content transitions. */
+/**
+ * Diagonal mask wipe for tab content. The leading edge stays slanted through
+ * the whole sweep — the right-hand points travel at different rates, so the
+ * reveal cuts across the panel rather than sliding a flat wall over it. The
+ * enter state overshoots to 130% at the top so the finished shape still
+ * covers the full box and nothing stays clipped.
+ */
 export const sliceVariants: Variants = {
   initial: {
-    clipPath: "polygon(0 0, 0 0, 0 100%, 0 100%)",
+    clipPath: "polygon(0 0, 0 0, -30% 100%, -30% 100%)",
     opacity: 0,
   },
   enter: {
-    clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+    clipPath: "polygon(0 0, 130% 0, 100% 100%, 0 100%)",
     opacity: 1,
-    transition: { ...BLADE, opacity: { duration: 0.15 } },
+    transition: { ...BLADE, opacity: { duration: 0.18 } },
   },
   exit: {
-    clipPath: "polygon(100% 0, 100% 0, 100% 100%, 100% 100%)",
     opacity: 0,
-    transition: { ...BLADE, opacity: { duration: 0.12 } },
+    x: -16,
+    transition: { duration: 0.16, ease: "easeIn" },
   },
 };
+
+/** Timing for the bar sweep that covers the moment content swaps. */
+export const MASK_BAR_COUNT = 6;
+export const MASK_DURATION = 0.55;
+export const MASK_STAGGER = 0.022;
 
 /** Nav blade items sliding in from the edge, staggered. */
 export const bladeListVariants: Variants = {

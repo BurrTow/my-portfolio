@@ -1,6 +1,7 @@
 import { Shell } from "@/components/layout/Shell";
 import { SliceTransition } from "@/components/transitions/SliceTransition";
 import { IntroSequence } from "@/components/transitions/IntroSequence";
+import { MaskWipe } from "@/components/transitions/MaskWipe";
 import { useUIStore } from "@/store/useUIStore";
 import { ProjectsTab } from "@/features/projects/ProjectsTab";
 import { CertificatesTab } from "@/features/certificates/CertificatesTab";
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <>
       <IntroSequence />
+      <MaskWipe />
       <Shell>
         <div
           role="tabpanel"
