@@ -33,22 +33,41 @@ export const sliceVariants: Variants = {
     clipPath: "polygon(0 0, 0 0, -30% 100%, -30% 100%)",
     opacity: 0,
   },
+  // easeOut, not the shared BLADE curve: a reveal begins at zero area, so an
+  // ease-in-out spends its slow opening on an empty panel. Front-loading it
+  // means the content is already mostly there by the time the eye lands.
   enter: {
     clipPath: "polygon(0 0, 130% 0, 100% 100%, 0 100%)",
     opacity: 1,
-    transition: { ...BLADE, opacity: { duration: 0.18 } },
+    transition: {
+      duration: 0.32,
+      ease: "easeOut",
+      opacity: { duration: 0.12 },
+    },
   },
+  // Near-instant. AnimatePresence in "wait" mode holds the incoming panel
+  // until this finishes, so any real exit duration is a window where the old
+  // content has gone and the new one has not arrived — a visible blank. The
+  // bars cannot be relied on to cover it, since when they mount depends on
+  // React's render timing, so the fix is to make the gap too short to read.
   exit: {
     opacity: 0,
-    x: -16,
-    transition: { duration: 0.16, ease: "easeIn" },
+    transition: { duration: 0.05, ease: "easeIn" },
   },
 };
 
-/** Timing for the bar sweep that covers the moment content swaps. */
+/**
+ * Timing for the bar sweep that covers the moment content swaps.
+ *
+ * easeOut rushes the bars in so they reach full cover early, easeIn then
+ * accelerates them away. Tuned by eye against captured frames — the numbers
+ * below are the ones that read right, not a derivation.
+ */
 export const MASK_BAR_COUNT = 6;
 export const MASK_DURATION = 0.55;
 export const MASK_STAGGER = 0.022;
+export const MASK_TIMES = [0, 0.42, 1];
+export const MASK_EASE = ["easeOut", "easeIn"] as const;
 
 /** Nav blade items sliding in from the edge, staggered. */
 export const bladeListVariants: Variants = {

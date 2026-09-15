@@ -3,10 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { useUIStore } from "@/store/useUIStore";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import {
-  EASE_BLADE,
   MASK_BAR_COUNT,
   MASK_DURATION,
+  MASK_EASE,
   MASK_STAGGER,
+  MASK_TIMES,
 } from "@/theme/motion";
 
 // Mostly blue with a single red bar as punctuation, matching how the palette
@@ -59,12 +60,17 @@ export function MaskWipe() {
             // a third of the way across and sit there covering the content.
             // skewX rides in the same transform because Framer Motion writes
             // `transform` wholesale and would drop a Tailwind skew class.
-            initial={{ x: "-130vw", skewX: -12 }}
-            animate={{ x: ["-130vw", "0vw", "130vw"], skewX: -12 }}
+            // 180vw rather than just over 100: the bars are skewed and taller
+            // than the viewport, so their horizontal reach reaches well past
+            // their own width and a shorter travel leaves them grazing the
+            // edge at rest. The midpoint stays at 0, so full coverage is
+            // unaffected — only the entry and exit run slightly faster.
+            initial={{ x: "-150vw", skewX: -12 }}
+            animate={{ x: ["-150vw", "0vw", "150vw"], skewX: -12 }}
             transition={{
               duration: MASK_DURATION,
-              times: [0, 0.42, 1],
-              ease: EASE_BLADE,
+              times: MASK_TIMES,
+              ease: [...MASK_EASE],
               delay: i * MASK_STAGGER,
             }}
           />
