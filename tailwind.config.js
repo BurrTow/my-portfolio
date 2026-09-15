@@ -68,13 +68,15 @@ export default {
         blade: "6px 6px 0 0 #1E5FFF",
       },
       keyframes: {
+        // Transform, not background-position: only the former is composited.
+        // 96px is two 48px tiles, so the loop point is invisible.
         "stripe-drift": {
-          "0%": { backgroundPosition: "0% 0%" },
-          "100%": { backgroundPosition: "-200% 0%" },
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-96px)" },
         },
       },
       animation: {
-        "stripe-drift": "stripe-drift 40s linear infinite",
+        "stripe-drift": "stripe-drift 12s linear infinite",
       },
     },
   },
