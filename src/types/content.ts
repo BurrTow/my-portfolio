@@ -6,14 +6,15 @@ export interface Project {
   thumbnail?: string;
   link?: string;
   repo?: string;
-  year: number;
+  year?: number;
 }
 
 export interface Certificate {
   id: string;
   name: string;
   issuer: string;
-  date: string;
+  description?: string;
+  date?: string;
   verifyUrl?: string;
 }
 

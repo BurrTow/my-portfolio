@@ -12,8 +12,13 @@ export function CertificateCard({ certificate }: { certificate: Certificate }) {
           {certificate.name}
         </h3>
         <p className="mt-1 font-ui text-sm text-ink-soft">
-          {certificate.issuer} · {certificate.date}
+          {[certificate.issuer, certificate.date].filter(Boolean).join(" · ")}
         </p>
+        {certificate.description && (
+          <p className="mt-3 font-ui text-sm text-ink-soft">
+            {certificate.description}
+          </p>
+        )}
         {certificate.verifyUrl && (
           <LinkButton
             variant="ghost"

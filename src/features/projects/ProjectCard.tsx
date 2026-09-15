@@ -33,11 +33,21 @@ export function ProjectCard({
         <p className="mt-2 line-clamp-2 font-ui text-sm text-ink-soft">
           {project.description}
         </p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-3 flex flex-wrap items-center gap-1.5">
           {project.tech.slice(0, 3).map((t) => (
             <Tag key={t}>{t}</Tag>
           ))}
+          {project.tech.length > 3 && (
+            <span className="font-ui text-xs text-ink/40">
+              +{project.tech.length - 3}
+            </span>
+          )}
         </div>
+        {!project.repo && (
+          <p className="mt-3 font-ui text-xs uppercase tracking-wide text-ink/40">
+            Repo coming soon
+          </p>
+        )}
       </Card>
     </motion.div>
   );

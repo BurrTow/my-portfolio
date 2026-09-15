@@ -4,7 +4,20 @@ A personal portfolio whose navigation behaves like the Persona 3 Reload menu
 system: diagonal blade cuts, a snappy selection highlight, and a slice-wipe
 transition between tabs — built on a beige/black (paper + ink) palette.
 
-## Stack
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Framework | React 18 |
+| Language | TypeScript (strict mode) |
+| Build tool | Vite 5 |
+| Styling | Tailwind CSS 3 |
+| Animation | Framer Motion 11 |
+| State | Zustand 4 |
+| Linting | ESLint 9 + typescript-eslint |
+| Fonts | Arsenal + Zen Kaku Gothic New (Google Fonts) |
+
+### Notes on the choices
 
 - **Vite + React 18 + TypeScript** (strict mode)
 - **Tailwind CSS** — color tokens, clip-path utilities, and motion easings
@@ -75,10 +88,11 @@ Nothing below `data/` needs a component change — add an entry to the array
 and it shows up.
 
 - **Projects**: add an object to `src/data/projects.ts` matching the
-  `Project` type in `src/types/content.ts` (`title`, `description`, `tech`,
-  optional `link`/`repo`, `year`).
-- **Certificates**: add to `src/data/certificates.ts` (`name`, `issuer`,
-  `date`, optional `verifyUrl`).
+  `Project` type in `src/types/content.ts`. Only `id`, `title`,
+  `description`, and `tech` are required; `link`, `repo`, and `year` are
+  optional.
+- **Certificates**: add to `src/data/certificates.ts` (`id`, `name`,
+  `issuer` required; `description`, `date`, `verifyUrl` optional).
 - **Repos**: add to `src/data/links.ts` (`name`, `description`, `url`,
   optional `language`/`stars`).
 - **Resume**: replace `public/resume-placeholder.pdf` with your real PDF
@@ -88,6 +102,17 @@ and it shows up.
   of an image. To wire in real thumbnails, add a `thumbnail` path to the
   `Project` data and swap the placeholder `<div>` in `ProjectCard.tsx` /
   `ProjectDetail.tsx` for an `<img>`.
+
+### Empty states
+
+Each tab renders a muted `EmptyState` panel when its data array is empty,
+rather than an empty grid. `links.ts` currently ships empty on purpose, so
+the Repos tab reads "Repositories coming soon" until real entries are added.
+
+Projects work the same way at field level: a project with no `repo` shows an
+inert "Repo coming soon" chip in place of the Source button. Repo URLs are
+kept commented out in `projects.ts` — uncomment one once that repository is
+public and the chip becomes a real link with no component change.
 
 ## Interactivity notes
 

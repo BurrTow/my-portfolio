@@ -1,6 +1,7 @@
 import type { Project } from "@/types/content";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
+import { PendingLabel } from "@/components/ui/PendingLabel";
 import { Panel } from "@/components/ui/Panel";
 import { Tag } from "@/components/ui/Tag";
 
@@ -22,7 +23,9 @@ export function ProjectDetail({
       <h3 className="font-display font-bold text-2xl text-ink sm:text-3xl">
         {project.title}
       </h3>
-      <p className="mt-1 font-ui text-sm text-ink-soft">{project.year}</p>
+      {project.year && (
+        <p className="mt-1 font-ui text-sm text-ink-soft">{project.year}</p>
+      )}
       <p className="mt-4 max-w-prose font-ui text-base text-ink-soft">
         {project.description}
       </p>
@@ -37,7 +40,7 @@ export function ProjectDetail({
             View Live ↗
           </LinkButton>
         )}
-        {project.repo && (
+        {project.repo ? (
           <LinkButton
             variant="ghost"
             href={project.repo}
@@ -46,6 +49,8 @@ export function ProjectDetail({
           >
             Source ↗
           </LinkButton>
+        ) : (
+          <PendingLabel>Repo coming soon</PendingLabel>
         )}
       </div>
     </Panel>
