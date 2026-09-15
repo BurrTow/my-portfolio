@@ -6,16 +6,16 @@ import { staggerItem } from "@/theme/motion";
 
 export function CertificateCard({ certificate }: { certificate: Certificate }) {
   return (
-    <motion.div variants={staggerItem}>
-      <Card>
-        <h3 className="font-display font-bold text-base text-ink sm:text-lg">
+    <motion.div variants={staggerItem} className="h-full">
+      <Card className="h-full">
+        <h3 className="font-display text-lg font-bold text-p3-white">
           {certificate.name}
         </h3>
-        <p className="mt-1 font-ui text-sm text-ink-soft">
+        <p className="mt-1 font-ui text-sm text-p3-white/50">
           {[certificate.issuer, certificate.date].filter(Boolean).join(" · ")}
         </p>
         {certificate.description && (
-          <p className="mt-3 font-ui text-sm text-ink-soft">
+          <p className="mt-3 font-ui text-sm text-p3-white/70">
             {certificate.description}
           </p>
         )}

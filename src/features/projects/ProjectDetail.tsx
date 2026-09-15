@@ -17,16 +17,16 @@ export function ProjectDetail({
       <Button variant="ghost" onClick={onBack} className="mb-6">
         ← Back
       </Button>
-      <div className="mb-6 flex aspect-[16/7] items-center justify-center border border-ink/20 bg-beige font-ui text-sm uppercase tracking-widest text-ink/40">
+      <div className="mb-6 flex aspect-[16/7] items-center justify-center border border-p3-blue/25 bg-p3-black font-ui text-sm uppercase tracking-widest text-p3-white/40">
         Screenshot
       </div>
-      <h3 className="font-display font-bold text-2xl text-ink sm:text-3xl">
+      <h3 className="relative inline-block font-display text-2xl font-bold text-p3-white sm:text-3xl">
         {project.title}
       </h3>
       {project.year && (
-        <p className="mt-1 font-ui text-sm text-ink-soft">{project.year}</p>
+        <p className="mt-1 font-ui text-sm text-p3-white/50">{project.year}</p>
       )}
-      <p className="mt-4 max-w-prose font-ui text-base text-ink-soft">
+      <p className="mt-4 max-w-prose font-ui text-base text-p3-white/70">
         {project.description}
       </p>
       <div className="mt-4 flex flex-wrap gap-1.5">

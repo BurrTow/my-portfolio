@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { pressableVariants } from "@/theme/motion";
+import { FOCUS_RING } from "@/components/ui/buttonStyles";
 
 interface CardProps extends ComponentPropsWithoutRef<typeof motion.div> {
   children: ReactNode;
@@ -14,7 +15,7 @@ export function Card({ children, className = "", ...props }: CardProps) {
       whileHover="hover"
       whileTap="tap"
       variants={pressableVariants}
-      className={`notched p-5 [--fill:theme(colors.beige.light)] hover:[--fill:theme(colors.beige.DEFAULT)] ${className}`}
+      className={`notched p-5 [--fill:theme(colors.p3-black.panel)] hover:[--edge:theme(colors.p3-red.DEFAULT)] hover:[--fill:theme(colors.p3-black.raised)] ${FOCUS_RING} ${className}`}
       {...props}
     >
       {children}

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { TABS, TAB_LABELS, useUIStore } from "@/store/useUIStore";
 import { useArrowKeyTabNav } from "@/hooks/useArrowKeyTabNav";
+import { FOCUS_RING } from "@/components/ui/buttonStyles";
 import {
   bladeItemVariants,
   bladeItemVariantsMobile,
@@ -24,7 +25,7 @@ export function Nav() {
         aria-orientation="vertical"
         aria-label="Primary"
         onKeyDown={handleKeyDown}
-        className="fixed left-0 top-0 z-20 hidden h-full w-56 flex-col justify-center gap-3 bg-ink px-4 md:flex"
+        className="fixed left-0 top-0 z-20 hidden h-full w-56 flex-col justify-center gap-3 border-r border-p3-blue/20 bg-p3-black px-4 md:flex"
       >
         {TABS.map((tab) => {
           const isActive = tab === activeTab;
@@ -38,25 +39,29 @@ export function Nav() {
               aria-controls={`panel-${tab}`}
               tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab)}
-              className="group relative flex h-12 items-center focus-visible:outline-none"
+              className={`group relative flex h-12 items-center ${FOCUS_RING}`}
             >
               <motion.span
                 layout
                 layoutDependency={activeTab}
                 transition={selectionHighlightTransition}
-                className={`clip-slice-r absolute inset-0 ${
-                  isActive ? "bg-beige" : "bg-transparent group-hover:bg-ink-light"
+                className={`clip-slice absolute inset-0 transition-colors duration-150 ${
+                  isActive
+                    ? "bg-p3-blue-deep"
+                    : "bg-transparent group-hover:bg-p3-black-raised"
                 }`}
               />
               <span
-                className={`relative z-10 -skew-x-6 pl-5 font-ui text-lg font-semibold uppercase tracking-wide transition-colors ${
-                  isActive ? "text-ink" : "text-beige-light/80"
+                className={`relative z-10 -skew-x-6 pl-5 font-ui text-lg font-semibold uppercase tracking-wide transition-colors duration-150 ${
+                  isActive
+                    ? "text-p3-white"
+                    : "text-p3-white/65 group-hover:text-p3-white"
                 }`}
               >
                 {TAB_LABELS[tab]}
               </span>
               {isActive && (
-                <span className="absolute left-0 top-0 z-10 h-full w-1.5 bg-accent" />
+                <span className="absolute left-0 top-0 z-10 h-full w-1.5 bg-p3-red" />
               )}
             </motion.button>
           );
@@ -72,7 +77,7 @@ export function Nav() {
         aria-orientation="horizontal"
         aria-label="Primary"
         onKeyDown={handleKeyDown}
-        className="fixed bottom-0 left-0 right-0 z-20 flex h-16 items-stretch justify-around border-t border-ink bg-ink px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-20 flex h-16 items-stretch justify-around border-t border-p3-blue/30 bg-p3-black px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden"
       >
         {TABS.map((tab) => {
           const isActive = tab === activeTab;
@@ -86,19 +91,21 @@ export function Nav() {
               aria-controls={`panel-${tab}`}
               tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab)}
-              className="relative flex min-w-[44px] flex-1 flex-col items-center justify-center gap-1 focus-visible:outline-none"
+              className={`relative flex min-w-[44px] flex-1 flex-col items-center justify-center gap-1 transition-colors duration-150 ${
+                isActive ? "bg-p3-blue-deep" : "hover:bg-p3-black-raised"
+              } ${FOCUS_RING}`}
             >
               {isActive && (
                 <motion.span
                   layout
                   layoutDependency={activeTab}
                   transition={selectionHighlightTransition}
-                  className="absolute inset-x-2 top-1 h-1 bg-accent"
+                  className="absolute inset-x-0 top-0 h-1 bg-p3-red"
                 />
               )}
               <span
                 className={`font-ui text-xs font-semibold uppercase tracking-wide ${
-                  isActive ? "text-beige-light" : "text-beige-light/50"
+                  isActive ? "text-p3-white" : "text-p3-white/65"
                 }`}
               >
                 {TAB_LABELS[tab]}

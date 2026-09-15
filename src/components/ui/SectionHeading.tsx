@@ -7,12 +7,12 @@ export function SectionHeading({
 }) {
   return (
     <div className="mb-6">
-      <h2 className="relative inline-block -skew-x-6 font-display font-bold text-3xl text-ink sm:text-4xl">
+      <h2 className="relative inline-block -skew-x-6 font-display text-3xl font-bold text-p3-white sm:text-4xl">
         {title}
-        <span className="absolute -bottom-1 left-0 h-1.5 w-2/3 bg-accent" />
+        <span className="absolute -bottom-1 left-0 h-1.5 w-2/3 bg-p3-red" />
       </h2>
       {subtitle && (
-        <p className="mt-3 max-w-prose font-ui text-base italic text-ink-soft">
+        <p className="mt-4 max-w-prose font-ui text-base text-p3-white/70">
           {subtitle}
         </p>
       )}

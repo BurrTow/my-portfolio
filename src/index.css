@@ -4,11 +4,11 @@
 
 @layer base {
   body {
-    @apply bg-beige font-ui text-ink antialiased;
+    @apply bg-p3-black font-ui text-p3-white antialiased;
   }
 
   ::selection {
-    @apply bg-ink text-beige;
+    @apply bg-p3-blue text-p3-white;
   }
 }
 

@@ -28,7 +28,7 @@ export function ProjectsTab() {
           initial="initial"
           animate="enter"
           variants={staggerContainer}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2"
         >
           {projects.map((project) => (
             <ProjectCard

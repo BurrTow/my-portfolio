@@ -5,10 +5,10 @@
  */
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="notched flex flex-col items-center justify-center px-6 py-16 text-center [--edge:theme(colors.beige.dark)] [--fill:theme(colors.beige.light)]">
-      <p className="font-display font-bold text-lg text-ink/50">{title}</p>
+    <div className="notched flex flex-col items-center justify-center px-6 py-16 text-center [--edge:theme(colors.p3-blue.dark)] [--fill:theme(colors.p3-black.panel)]">
+      <p className="font-display text-lg font-bold text-p3-white/70">{title}</p>
       {hint && (
-        <p className="mt-2 max-w-sm font-ui text-sm text-ink/40">{hint}</p>
+        <p className="mt-2 max-w-sm font-ui text-sm text-p3-white/50">{hint}</p>
       )}
     </div>
   );

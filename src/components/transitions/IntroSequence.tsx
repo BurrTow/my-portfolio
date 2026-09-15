@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useUIStore } from "@/store/useUIStore";
-import { introVariants } from "@/theme/motion";
+import { BLADE, introVariants } from "@/theme/motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 const AUTO_DISMISS_MS = 1400;
@@ -37,17 +37,18 @@ export function IntroSequence() {
           aria-label="Skip intro"
           tabIndex={0}
           onKeyDown={() => setDismissed(true)}
-          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-ink"
+          className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-p3-black"
         >
           <motion.h1
             initial={{ clipPath: "polygon(0 0,0 0,0 100%,0 100%)" }}
             animate={{ clipPath: "polygon(0 0,100% 0,100% 100%,0 100%)" }}
-            transition={{ duration: 0.5, ease: [0.65, 0, 0.35, 1] }}
-            className="-skew-x-6 font-display font-bold text-4xl text-beige sm:text-6xl"
+            transition={BLADE}
+            className="relative -skew-x-6 font-display text-4xl font-bold text-p3-white sm:text-6xl"
           >
             PORTFOLIO
+            <span className="absolute -bottom-3 left-0 h-1.5 w-1/3 bg-p3-red" />
           </motion.h1>
-          <span className="absolute bottom-8 font-ui text-xs uppercase tracking-widest text-beige/50">
+          <span className="absolute bottom-8 font-ui text-xs uppercase tracking-widest text-p3-white/50">
             tap to skip
           </span>
         </motion.div>

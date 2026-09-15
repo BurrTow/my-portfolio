@@ -9,7 +9,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={`bladed shadow-blade [--fill:theme(colors.beige.light)] ${className}`}
+      className={`bladed [--fill:theme(colors.p3-black.panel)] ${className}`}
     >
       {children}
     </div>

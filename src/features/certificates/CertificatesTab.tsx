@@ -19,7 +19,7 @@ export function CertificatesTab() {
           initial="initial"
           animate="enter"
           variants={staggerContainer}
-          className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+          className="grid grid-cols-1 gap-5 sm:grid-cols-2"
         >
           {certificates.map((cert) => (
             <CertificateCard key={cert.id} certificate={cert} />
