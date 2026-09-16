@@ -1,5 +1,6 @@
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { usePerfStore } from "@/store/usePerfStore";
+import { useUIStore } from "@/store/useUIStore";
 
 /**
  * Subtle drifting diagonal stripes behind the UI.
@@ -17,6 +18,9 @@ import { usePerfStore } from "@/store/usePerfStore";
 export function BackgroundFX() {
   const reducedMotion = usePrefersReducedMotion();
   const backgroundFx = usePerfStore((s) => s.backgroundFx);
+  // The map overlay is opaque, so this is invisible while it is open —
+  // animating it there costs frames for nothing anyone can see.
+  const mapOpen = useUIStore((s) => s.mapOpen);
 
   return (
     <div
@@ -26,7 +30,7 @@ export function BackgroundFX() {
       <div className="absolute inset-0 -skew-y-12 opacity-[0.07]">
         <div
           className={`absolute inset-y-0 left-0 w-[calc(100%+96px)] ${
-            reducedMotion || !backgroundFx ? "" : "animate-stripe-drift"
+            reducedMotion || !backgroundFx || mapOpen ? "" : "animate-stripe-drift"
           }`}
           style={{
             backgroundImage:

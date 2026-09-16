@@ -2,12 +2,15 @@ import { useEffect } from "react";
 import { usePerfStore } from "@/store/usePerfStore";
 
 /**
- * Ignore the first stretch after mount. Startup legitimately drops frames —
- * React mounting, fonts arriving, the intro sequence playing — and none of it
- * reflects steady-state capability. Sampling from zero downgraded machines
- * that then ran at a solid 60fps.
+ * Settle window after monitoring is enabled.
+ *
+ * Gating on the intro is not sufficient on its own: the moment it ends is the
+ * busiest of the whole session — the tab wipe plays and, on desktop, the map
+ * mounts. Sampling straight away measures that burst rather than the device,
+ * and downgrades machines that then hold a steady 60fps. This covers the
+ * handover so measurement starts once the page is actually idle.
  */
-const WARMUP_MS = 1800;
+const WARMUP_MS = 1500;
 const SAMPLE_MS = 3000;
 /** ~40fps. Above this per frame and the device is not keeping up. */
 const SLOW_FRAME_MS = 25;

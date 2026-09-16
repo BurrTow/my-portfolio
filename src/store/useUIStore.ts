@@ -40,25 +40,29 @@ interface UIState {
    * confirming your current destination looks like nothing happened at all.
    */
   navSeq: number;
+  /** Mirrors the map overlay so occluded work can be paused while it is up. */
+  mapOpen: boolean;
+  setMapOpen: (open: boolean) => void;
   setActiveTab: (tab: TabId) => void;
   introDone: boolean;
   finishIntro: () => void;
 }
 
-// Skip the boot sequence on repeat visits within the same tab session.
+// Skip the boot sequence for returning visitors. localStorage rather than
+// sessionStorage: a new tab tomorrow is still a repeat visit.
 const INTRO_KEY = "portfolio:intro-seen";
 
 export const useUIStore = create<UIState>((set) => ({
   activeTab: "projects",
   navSeq: 0,
+  mapOpen: false,
+  setMapOpen: (open) => set({ mapOpen: open }),
   setActiveTab: (tab) =>
     set((s) => ({ activeTab: tab, navSeq: s.navSeq + 1 })),
-  introDone:
-    typeof sessionStorage !== "undefined" &&
-    sessionStorage.getItem(INTRO_KEY) === "1",
+  introDone: false,
   finishIntro: () => {
     try {
-      sessionStorage.setItem(INTRO_KEY, "1");
+      localStorage.setItem(INTRO_KEY, "1");
     } catch {
       // sessionStorage unavailable (e.g. privacy mode) — intro just replays.
     }

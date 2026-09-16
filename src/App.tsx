@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { SliceTransition } from "@/components/transitions/SliceTransition";
 import { IntroSequence } from "@/components/transitions/IntroSequence";
@@ -11,6 +11,7 @@ import { ResumeTab } from "@/features/resume/ResumeTab";
 import { AboutTab } from "@/features/about/AboutTab";
 import { MapScreen } from "@/features/map/MapScreen";
 import { useDeviceTier } from "@/hooks/useDeviceTier";
+import { detectTier } from "@/hooks/useDeviceTier";
 import { useFrameMonitor } from "@/hooks/useFrameMonitor";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
 
@@ -25,14 +26,29 @@ const TAB_CONTENT = {
 export default function App() {
   const activeTab = useUIStore((s) => s.activeTab);
   const ActiveTabContent = TAB_CONTENT[activeTab];
-  const [mapOpen, setMapOpen] = useState(false);
+  const mapOpen = useUIStore((s) => s.mapOpen);
+  const setMapOpen = useUIStore((s) => s.setMapOpen);
+  const [introFinished, setIntroFinished] = useState(false);
+
+  // One routing decision, taken as the intro leaves, reusing the same tier
+  // detection as everything else. Desktop and capable devices land on the
+  // map; small or low-tier devices land on the flat nav, already showing
+  // Projects, which needs no extra step.
+  const handleIntroFinish = useCallback(() => {
+    setIntroFinished(true);
+    const tier = detectTier();
+    const roomForMap = window.innerWidth >= 768 && tier !== "low";
+    if (roomForMap) setMapOpen(true);
+  }, [setMapOpen]);
 
   useDeviceTier();
-  useFrameMonitor();
+  // Held until the intro is done: its animation would otherwise land inside
+  // the sampling window and be read as the device struggling.
+  useFrameMonitor(introFinished);
 
   return (
     <>
-      <IntroSequence />
+      <IntroSequence onFinish={handleIntroFinish} />
       <MaskWipe />
       {mapOpen && <MapScreen onClose={() => setMapOpen(false)} />}
       {!mapOpen && (
