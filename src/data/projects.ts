@@ -3,6 +3,10 @@ import type { Project } from "@/types/content";
 // Repo URLs are held here until each repository is made public. Uncomment the
 // `repo` line for a project once its repo is live; the card and detail view
 // switch from "Repo coming soon" to a real link automatically.
+//
+// repoOwnedByOther marks repositories hosted under a teammate's account, so
+// the card can say so up front instead of leaving it to be inferred from the
+// URL after following it.
 export const projects: Project[] = [
   {
     id: "chelsys-burger-pos",
@@ -20,6 +24,7 @@ export const projects: Project[] = [
       "ESLint",
     ],
     // repo: "https://github.com/sheleek1n/Sia2-Chelsys-burger",
+    repoOwnedByOther: true,
   },
   {
     id: "gastoai",
@@ -28,6 +33,7 @@ export const projects: Project[] = [
       "A multilingual AI expense tracker with voice and text input, built for Filipino college students. Supports English and Tagalog, with Bisaya in development.",
     tech: ["C++", "Flutter", "Dart", "CMake"],
     // repo: "https://github.com/sheleek1n/GastoAI-Expense-Tracker-App",
+    repoOwnedByOther: true,
   },
   {
     id: "basic-subnet-calculator",
@@ -43,5 +49,6 @@ export const projects: Project[] = [
       "GitHub Actions",
       "GitHub Pages",
     ],
+    repo: "https://github.com/BurrTow/subnetct",
   },
 ];

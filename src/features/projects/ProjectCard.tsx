@@ -3,6 +3,7 @@ import type { Project } from "@/types/content";
 import { Card } from "@/components/ui/Card";
 import { Tag } from "@/components/ui/Tag";
 import { staggerItem } from "@/theme/motion";
+import { FOCUS_RING } from "@/components/ui/buttonStyles";
 
 export function ProjectCard({
   project,
@@ -45,7 +46,24 @@ export function ProjectCard({
             </span>
           )}
         </div>
-        {!project.repo && (
+        {project.repoOwnedByOther && (
+          <p className="mt-4 font-ui text-xs text-p3-white/40">
+            Team project — repo hosted by teammate
+          </p>
+        )}
+        {project.repo ? (
+          // The card itself is the control that opens the detail view, so this
+          // link has to stop the click from also triggering it.
+          <a
+            href={project.repo}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className={`mt-4 inline-block font-ui text-xs font-semibold uppercase tracking-wide text-p3-blue underline-offset-4 hover:underline ${FOCUS_RING}`}
+          >
+            View Repo ↗
+          </a>
+        ) : (
           <p className="mt-4 font-ui text-xs uppercase tracking-wide text-p3-white/50">
             Repo coming soon
           </p>

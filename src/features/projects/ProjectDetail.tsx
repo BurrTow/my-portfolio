@@ -34,6 +34,11 @@ export function ProjectDetail({
           <Tag key={t}>{t}</Tag>
         ))}
       </div>
+      {project.repoOwnedByOther && (
+        <p className="mt-4 font-ui text-sm text-p3-white/40">
+          Team project — repo hosted by teammate
+        </p>
+      )}
       <div className="mt-6 flex flex-wrap gap-3">
         {project.link && (
           <LinkButton href={project.link} target="_blank" rel="noreferrer">

@@ -17,6 +17,12 @@ export interface Project {
   thumbnail?: string;
   link?: string;
   repo?: string;
+  /**
+   * The repository lives under someone else's account — a teammate's, for
+   * shared coursework. Surfaces an attribution note so ownership is clear
+   * before following the link rather than only on noticing the URL after.
+   */
+  repoOwnedByOther?: boolean;
   year?: number;
 }
 
