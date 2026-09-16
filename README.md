@@ -138,3 +138,31 @@ npm run dev      # start dev server
 npm run build    # type-check + production build
 npm run lint      # eslint
 ```
+
+### Git hooks
+
+`npm install` also runs `scripts/install-hooks.mjs`, which points
+`core.hooksPath` at the tracked [.githooks](.githooks) directory. Cloning and
+installing is all that is needed — there is no file to copy into `.git/hooks`
+and nothing to remember on a new machine.
+
+The one hook, `commit-msg`, strips AI attribution trailers from every commit
+message before it is finalised:
+
+- `Co-Authored-By: Claude …`
+- `Generated with [Claude Code](…)`
+- `Claude-Session: …`
+
+Only Claude trailers are matched, so human `Co-Authored-By` lines survive, as
+does any ordinary prose that happens to mention Claude.
+
+Because `core.hooksPath` is written to `.git/config`, which is never tracked,
+no machine-specific state is created and nothing needs git-ignoring.
+
+Notes:
+
+- It only affects **future** commits. Messages already in history keep their
+  trailers unless the history is rewritten.
+- `npm install --ignore-scripts` skips the setup. Run
+  `git config core.hooksPath .githooks` once by hand in that case.
+- Bypassing it with `git commit --no-verify` also skips the stripping.
