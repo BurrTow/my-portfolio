@@ -7,12 +7,14 @@ import { ProjectsTab } from "@/features/projects/ProjectsTab";
 import { CertificatesTab } from "@/features/certificates/CertificatesTab";
 import { ReposTab } from "@/features/links/ReposTab";
 import { ResumeTab } from "@/features/resume/ResumeTab";
+import { AboutTab } from "@/features/about/AboutTab";
 
 const TAB_CONTENT = {
   projects: ProjectsTab,
   certificates: CertificatesTab,
   repos: ReposTab,
   resume: ResumeTab,
+  about: AboutTab,
 };
 
 export default function App() {

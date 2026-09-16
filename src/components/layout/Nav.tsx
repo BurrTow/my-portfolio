@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
-import { TABS, TAB_LABELS, useUIStore } from "@/store/useUIStore";
+import {
+  TABS,
+  TAB_LABELS,
+  TAB_LABELS_SHORT,
+  useUIStore,
+} from "@/store/useUIStore";
 import { useArrowKeyTabNav } from "@/hooks/useArrowKeyTabNav";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
 import {
@@ -108,7 +113,7 @@ export function Nav() {
                   isActive ? "text-p3-white" : "text-p3-white/65"
                 }`}
               >
-                {TAB_LABELS[tab]}
+                {TAB_LABELS_SHORT[tab]}
               </span>
             </motion.button>
           );

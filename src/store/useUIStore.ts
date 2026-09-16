@@ -1,10 +1,17 @@
 import { create } from "zustand";
 
 // State-based tab switching instead of React Router: there are no distinct
-// routes/URLs to deep-link here, just one screen with four menu panels, so a
+// routes/URLs to deep-link here, just one screen with five menu panels, so a
 // router would add a dependency and history-stack complexity (e.g. back-button
 // semantics across tabs) without any real benefit over a Zustand-held TabId.
-export const TABS = ["projects", "certificates", "repos", "resume"] as const;
+// About sits last so Projects remains the landing view.
+export const TABS = [
+  "projects",
+  "certificates",
+  "repos",
+  "resume",
+  "about",
+] as const;
 export type TabId = (typeof TABS)[number];
 
 export const TAB_LABELS: Record<TabId, string> = {
@@ -12,6 +19,16 @@ export const TAB_LABELS: Record<TabId, string> = {
   certificates: "Certificates",
   repos: "Repos",
   resume: "Resume",
+  about: "About",
+};
+
+// Five tabs share 375px on a phone, giving each a 75px slot. "Certificates"
+// needs 105px and "Projects" 80px at that size, so those two get shorter
+// forms below the md breakpoint; the rest already fit and stay as they are.
+export const TAB_LABELS_SHORT: Record<TabId, string> = {
+  ...TAB_LABELS,
+  projects: "Work",
+  certificates: "Certs",
 };
 
 interface UIState {
