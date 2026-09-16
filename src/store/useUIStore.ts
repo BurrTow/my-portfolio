@@ -33,6 +33,13 @@ export const TAB_LABELS_SHORT: Record<TabId, string> = {
 
 interface UIState {
   activeTab: TabId;
+  /**
+   * Increments on every navigation request, including one that resolves to
+   * the tab already showing. The transition watches this rather than the tab
+   * value: inferring "navigation happened" from the value changing means
+   * confirming your current destination looks like nothing happened at all.
+   */
+  navSeq: number;
   setActiveTab: (tab: TabId) => void;
   introDone: boolean;
   finishIntro: () => void;
@@ -43,7 +50,9 @@ const INTRO_KEY = "portfolio:intro-seen";
 
 export const useUIStore = create<UIState>((set) => ({
   activeTab: "projects",
-  setActiveTab: (tab) => set({ activeTab: tab }),
+  navSeq: 0,
+  setActiveTab: (tab) =>
+    set((s) => ({ activeTab: tab, navSeq: s.navSeq + 1 })),
   introDone:
     typeof sessionStorage !== "undefined" &&
     sessionStorage.getItem(INTRO_KEY) === "1",

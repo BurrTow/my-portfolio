@@ -24,19 +24,21 @@ const BAR_COLOR = (i: number) =>
  * so the sweep stays cheap even with the background animation running.
  */
 export function MaskWipe() {
-  const activeTab = useUIStore((s) => s.activeTab);
+  const navSeq = useUIStore((s) => s.navSeq);
   const reducedMotion = usePrefersReducedMotion();
   const [sweep, setSweep] = useState(0);
-  // Compare against the last tab rather than guarding on "first run": under
-  // StrictMode the effect is invoked twice on mount, and a boolean guard would
-  // burn itself on the first pass and fire a spurious sweep on the second.
-  const lastTab = useRef(activeTab);
+  // Compare against the last sequence rather than guarding on "first run":
+  // under StrictMode the effect is invoked twice on mount, and a boolean guard
+  // would burn itself on the first pass and fire a spurious sweep on the
+  // second. navSeq starts at 0 and only moves on a real navigation, so mount
+  // never triggers one.
+  const lastSeq = useRef(navSeq);
 
   useEffect(() => {
-    if (lastTab.current === activeTab) return;
-    lastTab.current = activeTab;
+    if (lastSeq.current === navSeq) return;
+    lastSeq.current = navSeq;
     setSweep((n) => n + 1);
-  }, [activeTab]);
+  }, [navSeq]);
 
   if (reducedMotion || sweep === 0) return null;
 
