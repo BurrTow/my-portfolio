@@ -3,25 +3,27 @@ import { create } from "zustand";
 export type PerfTier = "high" | "mid" | "low";
 
 /**
- * Capability flags, degraded independently rather than as one switch. The
- * downgrade ladder drops the cheapest-to-lose thing first:
+ * Capability flags, degraded independently rather than as one switch.
  *
- *   1. backgroundFx   — decorative only, nothing depends on it
- *   2. animatedSprite — the map still works, the cursor just jumps
- *   3. mapEnabled     — falls back to the flat nav, which is fully functional
+ * The pin-select map has no motion of its own, so the ladder is short — only
+ * decorative weight comes off:
  *
- * Ordering matters: navigation must be the last thing to go, never the first.
+ *   1. backgroundFx  — the drifting stripe backdrop behind the whole site
+ *   2. mapBackdrop   — the map's illustration; pins go with it
+ *
+ * The map screen itself is never gated. It is navigation, and its sidebar
+ * list is a complete, accessible control on its own, so there is nothing to
+ * gain by removing it and a usability cost to doing so.
  */
 export interface PerfFlags {
   backgroundFx: boolean;
-  animatedSprite: boolean;
-  mapEnabled: boolean;
+  mapBackdrop: boolean;
 }
 
 const FLAGS_BY_TIER: Record<PerfTier, PerfFlags> = {
-  high: { backgroundFx: true, animatedSprite: true, mapEnabled: true },
-  mid: { backgroundFx: true, animatedSprite: false, mapEnabled: true },
-  low: { backgroundFx: false, animatedSprite: false, mapEnabled: false },
+  high: { backgroundFx: true, mapBackdrop: true },
+  mid: { backgroundFx: true, mapBackdrop: true },
+  low: { backgroundFx: false, mapBackdrop: false },
 };
 
 interface PerfState extends PerfFlags {
@@ -41,14 +43,18 @@ export const usePerfStore = create<PerfState>((set, get) => ({
   downgrade: () => {
     const s = get();
     if (s.backgroundFx) return set({ backgroundFx: false, downgraded: true });
-    if (s.animatedSprite) return set({ animatedSprite: false, downgraded: true });
-    if (s.mapEnabled) return set({ mapEnabled: false, tier: "low", downgraded: true });
+    if (s.mapBackdrop)
+      return set({ mapBackdrop: false, tier: "low", downgraded: true });
   },
 }));
 
 // Dev-only handle so each tier can be exercised without faking hardware.
 // Stripped from production builds by the import.meta.env.DEV guard.
 if (import.meta.env.DEV && typeof window !== "undefined") {
-  (window as unknown as { __setTier?: (t: PerfTier) => void }).__setTier = (t) =>
-    usePerfStore.getState().setTier(t);
+  const w = window as unknown as {
+    __setTier?: (t: PerfTier) => void;
+    __perfState?: () => PerfState;
+  };
+  w.__setTier = (t) => usePerfStore.getState().setTier(t);
+  w.__perfState = () => usePerfStore.getState();
 }

@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 import { usePerfStore } from "@/store/usePerfStore";
 
+/**
+ * Ignore the first stretch after mount. Startup legitimately drops frames —
+ * React mounting, fonts arriving, the intro sequence playing — and none of it
+ * reflects steady-state capability. Sampling from zero downgraded machines
+ * that then ran at a solid 60fps.
+ */
+const WARMUP_MS = 1800;
 const SAMPLE_MS = 3000;
 /** ~40fps. Above this per frame and the device is not keeping up. */
 const SLOW_FRAME_MS = 25;
@@ -29,13 +36,18 @@ export function useFrameMonitor(enabled = true) {
 
     let raf = 0;
     let last = performance.now();
-    const start = last;
+    const mounted = last;
     let recent: number[] = [];
     let stopped = false;
 
     const tick = (now: number) => {
       const delta = now - last;
       last = now;
+
+      if (now - mounted < WARMUP_MS) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
 
       recent.push(delta);
       if (recent.length > WINDOW) recent.shift();
@@ -50,7 +62,8 @@ export function useFrameMonitor(enabled = true) {
         }
       }
 
-      if (now - start < SAMPLE_MS && !stopped) raf = requestAnimationFrame(tick);
+      if (now - mounted < WARMUP_MS + SAMPLE_MS && !stopped)
+        raf = requestAnimationFrame(tick);
     };
 
     raf = requestAnimationFrame(tick);
