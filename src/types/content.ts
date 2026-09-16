@@ -23,6 +23,8 @@ export interface Project {
    * before following the link rather than only on noticing the URL after.
    */
   repoOwnedByOther?: boolean;
+  /** Headcount for group work. Omitted entirely for solo projects. */
+  teamSize?: number;
   year?: number;
 }
 

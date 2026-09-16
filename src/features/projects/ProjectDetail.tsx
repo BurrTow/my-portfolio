@@ -4,6 +4,7 @@ import { LinkButton } from "@/components/ui/LinkButton";
 import { PendingLabel } from "@/components/ui/PendingLabel";
 import { Panel } from "@/components/ui/Panel";
 import { Tag } from "@/components/ui/Tag";
+import { projectCredit } from "@/features/projects/projectCredit";
 
 export function ProjectDetail({
   project,
@@ -12,6 +13,8 @@ export function ProjectDetail({
   project: Project;
   onBack: () => void;
 }) {
+  const credit = projectCredit(project);
+
   return (
     <Panel className="p-6 sm:p-8">
       <Button variant="ghost" onClick={onBack} className="mb-6">
@@ -34,10 +37,8 @@ export function ProjectDetail({
           <Tag key={t}>{t}</Tag>
         ))}
       </div>
-      {project.repoOwnedByOther && (
-        <p className="mt-4 font-ui text-sm text-p3-white/40">
-          Team project — repo hosted by teammate
-        </p>
+      {credit && (
+        <p className="mt-4 font-ui text-sm text-p3-white/40">{credit}</p>
       )}
       <div className="mt-6 flex flex-wrap gap-3">
         {project.link && (

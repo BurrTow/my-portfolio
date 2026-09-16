@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Tag } from "@/components/ui/Tag";
 import { staggerItem } from "@/theme/motion";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
+import { projectCredit } from "@/features/projects/projectCredit";
 
 export function ProjectCard({
   project,
@@ -12,6 +13,8 @@ export function ProjectCard({
   project: Project;
   onSelect: () => void;
 }) {
+  const credit = projectCredit(project);
+
   return (
     <motion.div variants={staggerItem} className="h-full">
       <Card
@@ -46,10 +49,8 @@ export function ProjectCard({
             </span>
           )}
         </div>
-        {project.repoOwnedByOther && (
-          <p className="mt-4 font-ui text-xs text-p3-white/40">
-            Team project — repo hosted by teammate
-          </p>
+        {credit && (
+          <p className="mt-4 font-ui text-xs text-p3-white/40">{credit}</p>
         )}
         {project.repo ? (
           // The card itself is the control that opens the detail view, so this
