@@ -1,0 +1,28 @@
+#!/bin/sh
+# Strips AI attribution trailers from commit messages.
+#
+# Installed automatically by scripts/install-hooks.mjs on npm install, which
+# points core.hooksPath at this directory. Because the hook is tracked rather
+# than copied into .git/hooks, every clone gets it and there is no per-machine
+# state to keep in sync.
+#
+# sed -i is spelled differently on GNU and BSD; the -i.bak form plus an
+# explicit rm works on both Linux and macOS.
+
+MSG_FILE="$1"
+[ -f "$MSG_FILE" ] || exit 0
+
+sed -i.bak \
+  -e '/^Co-Authored-By: Claude/d' \
+  -e '/^Co-authored-by: Claude/d' \
+  -e '/Generated with \[Claude Code\]/d' \
+  -e '/^Claude-Session:/d' \
+  "$MSG_FILE"
+rm -f "$MSG_FILE.bak"
+
+# Removing trailers can leave the message ending in blank lines. Command
+# substitution drops trailing newlines, so this normalises the ending.
+CLEANED=$(cat "$MSG_FILE")
+printf '%s\n' "$CLEANED" > "$MSG_FILE"
+
+exit 0
