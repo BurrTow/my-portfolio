@@ -1,3 +1,14 @@
+export interface SiteIdentity {
+  /** Full legal name, used where formality matters. */
+  fullName: string;
+  /** Short form for tight typographic slots like the intro. */
+  shortName: string;
+  tagline: string;
+  bio: string;
+  email: string;
+  location?: string;
+}
+
 export interface Project {
   id: string;
   title: string;
