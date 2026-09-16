@@ -1,4 +1,5 @@
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { usePerfStore } from "@/store/usePerfStore";
 
 /**
  * Subtle drifting diagonal stripes behind the UI.
@@ -15,6 +16,7 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
  */
 export function BackgroundFX() {
   const reducedMotion = usePrefersReducedMotion();
+  const backgroundFx = usePerfStore((s) => s.backgroundFx);
 
   return (
     <div
@@ -24,7 +26,7 @@ export function BackgroundFX() {
       <div className="absolute inset-0 -skew-y-12 opacity-[0.07]">
         <div
           className={`absolute inset-y-0 left-0 w-[calc(100%+96px)] ${
-            reducedMotion ? "" : "animate-stripe-drift"
+            reducedMotion || !backgroundFx ? "" : "animate-stripe-drift"
           }`}
           style={{
             backgroundImage:
