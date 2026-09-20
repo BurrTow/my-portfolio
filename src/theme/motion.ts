@@ -118,3 +118,39 @@ export const introVariants: Variants = {
     transition: { duration: 0.4, ease: "easeInOut" },
   },
 };
+/**
+ * Cross-fade for the map's detail card as the highlighted pin changes.
+ *
+ * Both panels are placed in the same grid cell so the outgoing and incoming
+ * states overlap. Deliberately not paired with AnimatePresence mode="wait":
+ * that holds the incoming panel until the outgoing one has finished leaving,
+ * which shows an empty card on every change — the same trap sliceVariants
+ * documents above.
+ */
+export const detailCrossFadeVariants: Variants = {
+  initial: { opacity: 0, x: 10 },
+  enter: { opacity: 1, x: 0, transition: { duration: 0.2, ease: EASE_SNAP } },
+  exit: { opacity: 0, transition: { duration: 0.12, ease: "easeIn" } },
+};
+
+/**
+ * Per-character heading reveal.
+ *
+ * The string is split into spans in React rather than by a DOM-splitting
+ * library, so this needs no dependency beyond the Framer Motion already here.
+ * Each glyph rides a transform and opacity only, and the parent clips them, so
+ * the letters wipe up from the baseline without repainting the row.
+ */
+export const headingContainer: Variants = {
+  initial: {},
+  enter: { transition: { staggerChildren: 0.02, delayChildren: 0.06 } },
+};
+
+export const headingLetter: Variants = {
+  initial: { y: "120%", opacity: 0 },
+  enter: {
+    y: "0%",
+    opacity: 1,
+    transition: { duration: 0.42, ease: EASE_SNAP },
+  },
+};

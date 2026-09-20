@@ -4,6 +4,22 @@ import { usePerfStore } from "@/store/usePerfStore";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
 import { MAP_PINS } from "@/features/map/mapNodes";
 import { CityscapeBackdrop } from "@/features/map/CityscapeBackdrop";
+import { MapDetail } from "@/features/map/MapDetail";
+import { TabIcon } from "@/components/ui/TabIcon";
+
+/** Rounded key cap and its action, replacing the plain-text prompt line. */
+function KeyHint({ glyph, label }: { glyph: string; label: string }) {
+  return (
+    <span className="flex items-center gap-2">
+      <span className="inline-flex h-6 min-w-[1.9rem] items-center justify-center rounded-full border border-p3-blue/50 bg-p3-black-raised px-2 font-ui text-[0.7rem] font-bold leading-none text-p3-white">
+        {glyph}
+      </span>
+      <span className="font-ui text-xs uppercase tracking-wide text-p3-white/55">
+        {label}
+      </span>
+    </span>
+  );
+}
 
 /**
  * Pin-select map: a static backdrop with location pins, mirrored by a sidebar
@@ -108,33 +124,36 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
         {/* Sidebar — primary control, always present */}
         {/* Without a backdrop the list is the whole screen, not a column with
             dead space beside it. */}
-        <ul
-          className={`flex flex-col gap-2 ${
-            showBackdrop ? "shrink-0 lg:w-64" : "w-full"
+        <div
+          className={`flex flex-col gap-3 ${
+            showBackdrop ? "shrink-0 lg:w-72" : "w-full"
           }`}
         >
-          {MAP_PINS.map((pin) => {
-            const isSel = pin.id === selected;
-            return (
-              <li key={pin.id}>
-                <button
-                  onClick={() => choose(pin.id)}
-                  onMouseEnter={() => setSelected(pin.id)}
-                  onFocus={() => setSelected(pin.id)}
-                  aria-current={pin.id === activeTab ? "page" : undefined}
-                  className={`notched flex w-full items-center gap-3 px-4 py-3 text-left font-ui text-sm font-semibold uppercase tracking-wide transition-colors duration-150 ${FOCUS_RING} ${
-                    isSel
-                      ? "text-p3-white [--edge:theme(colors.p3-red.DEFAULT)] [--fill:theme(colors.p3-blue.deep)]"
-                      : "text-p3-white/70 [--fill:theme(colors.p3-black.panel)]"
-                  }`}
-                >
-                  <span className="text-base">{pin.icon}</span>
-                  {pin.label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+          <ul className="flex flex-col gap-2">
+            {MAP_PINS.map((pin) => {
+              const isSel = pin.id === selected;
+              return (
+                <li key={pin.id}>
+                  <button
+                    onClick={() => choose(pin.id)}
+                    onMouseEnter={() => setSelected(pin.id)}
+                    onFocus={() => setSelected(pin.id)}
+                    aria-current={pin.id === activeTab ? "page" : undefined}
+                    className={`notched flex w-full items-center gap-3 px-4 py-3 text-left font-ui text-sm font-semibold uppercase tracking-wide transition-colors duration-150 ${FOCUS_RING} ${
+                      isSel
+                        ? "text-p3-white [--edge:theme(colors.p3-red.DEFAULT)] [--fill:theme(colors.p3-blue.deep)]"
+                        : "text-p3-white/70 [--fill:theme(colors.p3-black.panel)]"
+                    }`}
+                  >
+                    <TabIcon id={pin.id} className="h-5 w-5 shrink-0" />
+                    {pin.label}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <MapDetail selected={selected} />
+        </div>
 
         {/* Backdrop + pins */}
         {showBackdrop && (
@@ -168,9 +187,10 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                         : "border-p3-blue/70 bg-p3-black"
                     }`}
                   >
-                    <span className="-rotate-45 text-xs text-p3-white">
-                      {pin.icon}
-                    </span>
+                    <TabIcon
+                      id={pin.id}
+                      className="h-4 w-4 -rotate-45 text-p3-white"
+                    />
                   </span>
                 </button>
               );
@@ -181,11 +201,11 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
 
       {/* Bottom HUD */}
       <div className="mt-4 flex items-center justify-between gap-4 border-t border-p3-blue/25 pt-3">
-        <p className="font-ui text-xs uppercase tracking-wide text-p3-white/50">
-          <span className="text-p3-white/80">↑↓</span> Select ·{" "}
-          <span className="text-p3-white/80">Enter</span> Travel ·{" "}
-          <span className="text-p3-white/80">Esc</span> Close
-        </p>
+        <div className="flex flex-wrap items-center gap-4">
+          <KeyHint glyph="↑↓" label="Select" />
+          <KeyHint glyph="Enter" label="Travel" />
+          <KeyHint glyph="Esc" label="Close" />
+        </div>
         <div className="flex gap-2">
           <button
             onClick={onClose}

@@ -4,25 +4,13 @@ import { useUIStore } from "@/store/useUIStore";
 import { site } from "@/data/site";
 import { BLADE, EASE_BLADE } from "@/theme/motion";
 import { IntroExit } from "@/components/transitions/IntroExit";
-import type { IntroExitVariant } from "@/theme/introMotion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /** Returning visitors go straight to their destination. */
 const SEEN_KEY = "portfolio:intro-seen";
-/** Lets both exit treatments be compared without a rebuild. */
-const EXIT_KEY = "portfolio:intro-exit";
-const DEFAULT_EXIT: IntroExitVariant = "shatter";
 
 /** Only the reveal is timed. Nothing advances the screen on its own. */
 const TITLE_MS = 620;
-
-function readExit(): IntroExitVariant {
-  try {
-    return localStorage.getItem(EXIT_KEY) === "wipe" ? "wipe" : DEFAULT_EXIT;
-  } catch {
-    return DEFAULT_EXIT;
-  }
-}
 
 function hasSeenIntro(): boolean {
   try {
@@ -49,15 +37,29 @@ export function IntroSequence({ onFinish }: { onFinish: () => void }) {
   const finishIntro = useUIStore((s) => s.finishIntro);
   const reducedMotion = usePrefersReducedMotion();
 
-  const [exitVariant] = useState<IntroExitVariant>(readExit);
   const [stage, setStage] = useState<"title" | "name">("title");
   const [dismissed, setDismissed] = useState(false);
+  const [covered, setCovered] = useState(false);
 
   // Reduced motion collapses the whole sequence rather than shortening it —
   // same hard override as the rest of the site, no partial version.
   const skipEntirely = introDone || reducedMotion || hasSeenIntro();
 
   const finish = useCallback(() => setDismissed(true), []);
+
+  /**
+   * Fired while the exit panels hide the whole frame.
+   *
+   * Both halves of the handover happen here, in one commit: the destination is
+   * chosen and this screen stops rendering. Doing either one earlier leaves a
+   * gap — dropping the title screen on dismiss shows the page underneath while
+   * the panels are still sweeping in, and choosing the destination on
+   * completion means the panels clear over the old view instead of the new one.
+   */
+  const handleCover = useCallback(() => {
+    setCovered(true);
+    onFinish();
+  }, [onFinish]);
 
   useEffect(() => {
     if (skipEntirely) {
@@ -86,18 +88,14 @@ export function IntroSequence({ onFinish }: { onFinish: () => void }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [skipEntirely, dismissed, finish]);
 
-  const visible = !skipEntirely && !dismissed;
+  // Held until the panels cover, not until the click: the title screen is what
+  // they sweep in over.
+  const visible = !skipEntirely && !covered;
 
   return (
     <>
       {dismissed && !skipEntirely && (
-        <IntroExit
-          variant={exitVariant}
-          onComplete={() => {
-            finishIntro();
-            onFinish();
-          }}
-        />
+        <IntroExit onCover={handleCover} onComplete={finishIntro} />
       )}
       {visible && (
         <motion.div
@@ -167,15 +165,8 @@ export function IntroSequence({ onFinish }: { onFinish: () => void }) {
   );
 }
 
-// Dev-only: flip continue style and replay without editing code.
+// Dev-only: replay the intro without editing code or clearing storage by hand.
 if (import.meta.env.DEV && typeof window !== "undefined") {
-  const w = window as unknown as {
-    __introExit?: (v: IntroExitVariant) => void;
-    __replayIntro?: () => void;
-  };
-  w.__introExit = (v) => {
-    localStorage.setItem(EXIT_KEY, v);
-    localStorage.removeItem(SEEN_KEY);
-  };
+  const w = window as unknown as { __replayIntro?: () => void };
   w.__replayIntro = () => localStorage.removeItem(SEEN_KEY);
 }

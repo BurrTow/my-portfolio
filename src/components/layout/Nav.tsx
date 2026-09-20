@@ -1,11 +1,15 @@
 import { motion } from "framer-motion";
+import { useState } from "react";
 import {
   TABS,
   TAB_LABELS,
   TAB_LABELS_SHORT,
   useUIStore,
+  type TabId,
 } from "@/store/useUIStore";
 import { useArrowKeyTabNav } from "@/hooks/useArrowKeyTabNav";
+import { TabIcon } from "@/components/ui/TabIcon";
+import { GlitchLabel } from "@/components/ui/GlitchLabel";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
 import {
   bladeItemVariants,
@@ -18,6 +22,10 @@ export function Nav() {
   const activeTab = useUIStore((s) => s.activeTab);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
   const handleKeyDown = useArrowKeyTabNav(activeTab, setActiveTab);
+  // Focus counts as hover here so the effect is reachable from the keyboard,
+  // not just the mouse. Only the desktop blades use it — the mobile bar has no
+  // hover state to trigger it.
+  const [hovered, setHovered] = useState<TabId | null>(null);
 
   return (
     <>
@@ -44,7 +52,11 @@ export function Nav() {
               aria-controls={`panel-${tab}`}
               tabIndex={isActive ? 0 : -1}
               onClick={() => setActiveTab(tab)}
-              className={`group relative flex h-12 items-center ${FOCUS_RING}`}
+              onMouseEnter={() => setHovered(tab)}
+              onMouseLeave={() => setHovered(null)}
+              onFocus={() => setHovered(tab)}
+              onBlur={() => setHovered(null)}
+              className={`group relative flex h-12 items-center gap-3 pl-5 pr-3 ${FOCUS_RING}`}
             >
               <motion.span
                 layout
@@ -56,15 +68,23 @@ export function Nav() {
                     : "bg-transparent group-hover:bg-p3-black-raised"
                 }`}
               />
-              <span
-                className={`relative z-10 -skew-x-6 pl-5 font-ui text-lg font-semibold uppercase tracking-wide transition-colors duration-150 ${
+              <TabIcon
+                id={tab}
+                className={`relative z-10 h-5 w-5 shrink-0 transition-colors duration-150 ${
+                  isActive
+                    ? "text-p3-white"
+                    : "text-p3-blue/70 group-hover:text-p3-white"
+                }`}
+              />
+              <GlitchLabel
+                text={TAB_LABELS[tab]}
+                active={hovered === tab}
+                className={`relative z-10 -skew-x-6 font-ui text-lg font-semibold uppercase tracking-wide transition-colors duration-150 ${
                   isActive
                     ? "text-p3-white"
                     : "text-p3-white/65 group-hover:text-p3-white"
                 }`}
-              >
-                {TAB_LABELS[tab]}
-              </span>
+              />
               {isActive && (
                 <span className="absolute left-0 top-0 z-10 h-full w-1.5 bg-p3-red" />
               )}
@@ -108,6 +128,12 @@ export function Nav() {
                   className="absolute inset-x-0 top-0 h-1 bg-p3-red"
                 />
               )}
+              <TabIcon
+                id={tab}
+                className={`h-5 w-5 ${
+                  isActive ? "text-p3-white" : "text-p3-blue/70"
+                }`}
+              />
               <span
                 className={`font-ui text-xs font-semibold uppercase tracking-wide ${
                   isActive ? "text-p3-white" : "text-p3-white/65"
