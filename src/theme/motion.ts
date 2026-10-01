@@ -164,28 +164,38 @@ export const headingLetter: Variants = {
 /**
  * Map screen entrance and exit.
  *
- * Transform only — no opacity, no scale, no clip-path. The map is a
- * full-viewport opaque field, so fading it would make it a translucent
- * full-screen layer mid-animation, which is the compositing cost that has hit
- * this project repeatedly. Scaling it would re-rasterise every glyph on the
- * screen the way the card hover used to. A translate distorts nothing and
- * composites on the GPU.
+ * A scale-and-fade settle, deliberately unlike the tab wipe: the map is a
+ * dialog opening on top of the page, not a content swap in the same slot, so
+ * reusing the wipe's clip-path language would make navigation and overlay read
+ * as the same gesture. The wipe stays reserved for tab-to-tab moves.
  *
- * The diagonal comes from moving on both axes rather than from a skew, so the
- * motion reads along the site's angle without bending the content.
+ * Fading a full-viewport layer is normally the thing to avoid on this project —
+ * a translucent screen-sized layer over the drifting backdrop is what halved
+ * frame rate before. It is safe *here*, and only here, because of the ordering
+ * in MapScreen: `mapOpen` stays true until the exit finishes, so BackgroundFX
+ * is frozen for the whole of both animations. Nothing underneath is moving
+ * while this is translucent. Change that ordering and this becomes the bug
+ * again.
+ *
+ * The scale lands on exactly 1, so no glyph is left rendered at a fractional
+ * size once it settles — the softness is confined to the animation itself,
+ * unlike a hover that holds a scaled state while the pointer rests on it.
  */
+export const MAP_ENTER_SEC = 0.22;
+export const MAP_EXIT_SEC = 0.17;
+
 export const mapScreenVariants: Variants = {
-  initial: { x: "100%", y: "10%" },
+  initial: { scale: 0.95, opacity: 0 },
   enter: {
-    x: "0%",
-    y: "0%",
-    transition: { duration: 0.36, ease: EASE_BLADE },
+    scale: 1,
+    opacity: 1,
+    transition: { duration: MAP_ENTER_SEC, ease: EASE_SNAP },
   },
-  // Quicker leaving than arriving: the exit is a hand-off, and on a
-  // confirmation the tab wipe is queued up behind it.
+  // Leaving is quicker than arriving, and eases in rather than out, so the
+  // panel feels dismissed rather than gently withdrawn.
   exit: {
-    x: "100%",
-    y: "10%",
-    transition: { duration: 0.26, ease: EASE_BLADE },
+    scale: 0.95,
+    opacity: 0,
+    transition: { duration: MAP_EXIT_SEC, ease: "easeIn" },
   },
 };
