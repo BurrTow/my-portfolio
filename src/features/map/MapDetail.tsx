@@ -4,6 +4,7 @@ import { projects } from "@/data/projects";
 import { certificates } from "@/data/certificates";
 import { repoLinks } from "@/data/links";
 import { TabIcon } from "@/components/ui/TabIcon";
+import { PortraitSilhouette } from "@/components/ui/PortraitSilhouette";
 import { detailCrossFadeVariants } from "@/theme/motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { pinById } from "@/features/map/mapNodes";
@@ -41,27 +42,7 @@ export function MapDetail({ selected }: { selected: TabId }) {
       {/* Identity — constant */}
       <div className="flex items-start gap-3">
         <div className="notched h-20 w-16 shrink-0 overflow-hidden [--fill:theme(colors.p3-black.raised)]">
-          {/* Placeholder geometry, not artwork: an obvious silhouette rather
-              than something pretending to be a photograph. */}
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 64 80"
-            fill="none"
-            className="h-full w-full text-p3-blue"
-          >
-            <circle cx="32" cy="27" r="14" fill="currentColor" opacity="0.5" />
-            <path
-              d="M6 80 C6 60 17 50 32 50 C47 50 58 60 58 80 Z"
-              fill="currentColor"
-              opacity="0.5"
-            />
-            <path
-              d="M0 62 L64 30"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              opacity="0.35"
-            />
-          </svg>
+          <PortraitSilhouette className="h-full w-full text-p3-blue" />
         </div>
         <div className="min-w-0">
           <h3 className="truncate font-display text-lg font-bold text-p3-white">
