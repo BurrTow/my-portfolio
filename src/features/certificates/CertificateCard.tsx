@@ -14,6 +14,11 @@ export function CertificateCard({ certificate }: { certificate: Certificate }) {
         <p className="mt-1 font-ui text-sm text-p3-white/50">
           {[certificate.issuer, certificate.date].filter(Boolean).join(" · ")}
         </p>
+        {certificate.credentialId && (
+          <p className="mt-1 font-ui text-xs uppercase tracking-wide text-p3-white/40">
+            Credential {certificate.credentialId}
+          </p>
+        )}
         {certificate.description && (
           <p className="mt-3 font-ui text-sm text-p3-white/70">
             {certificate.description}

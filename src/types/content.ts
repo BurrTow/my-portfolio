@@ -34,6 +34,8 @@ export interface Certificate {
   issuer: string;
   description?: string;
   date?: string;
+  /** Printed on the certificate itself; shown so a claim can be checked. */
+  credentialId?: string;
   verifyUrl?: string;
 }
 
