@@ -1,3 +1,4 @@
+import { motion, type AnimationDefinition } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useUIStore, type TabId } from "@/store/useUIStore";
 import { usePerfStore } from "@/store/usePerfStore";
@@ -6,6 +7,8 @@ import { MAP_PINS } from "@/features/map/mapNodes";
 import { CityscapeBackdrop } from "@/features/map/CityscapeBackdrop";
 import { MapDetail } from "@/features/map/MapDetail";
 import { TabIcon } from "@/components/ui/TabIcon";
+import { mapScreenVariants } from "@/theme/motion";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 
 /** Rounded key cap and its action, replacing the plain-text prompt line. */
 function KeyHint({ glyph, label }: { glyph: string; label: string }) {
@@ -32,25 +35,67 @@ function KeyHint({ glyph, label }: { glyph: string; label: string }) {
  *
  * The overlay is opaque. A translucent full-viewport layer over the animating
  * backdrop was what halved frame rate in the previous map build.
+ *
+ * The exit animation runs here rather than through an AnimatePresence in the
+ * caller, and `onClose` is only called once it finishes. That ordering is what
+ * keeps the drifting backdrop frozen: BackgroundFX pauses on `mapOpen`, and
+ * handing that flag back at the start of the exit would restart the drift under
+ * a screen that is still moving — the exact pairing this project keeps paying
+ * for. It also leaves App.tsx untouched.
  */
 export function MapScreen({ onClose }: { onClose: () => void }) {
   const activeTab = useUIStore((s) => s.activeTab);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
   const mapBackdrop = usePerfStore((s) => s.mapBackdrop);
   const [selected, setSelected] = useState<TabId>(activeTab);
+  const [closing, setClosing] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
+  // Held across the exit so a confirmed destination is applied as the screen
+  // finishes leaving, rather than while it is still on its way out.
+  const pendingRef = useRef<(() => void) | null>(null);
+
+  /**
+   * Plays the exit, then performs the action. Reduced motion skips straight to
+   * the action, so the screen cuts rather than hurrying.
+   */
+  const requestClose = useCallback(
+    (after?: () => void) => {
+      if (closing) return;
+      if (reducedMotion) {
+        after?.();
+        onClose();
+        return;
+      }
+      pendingRef.current = after ?? null;
+      setClosing(true);
+    },
+    [closing, reducedMotion, onClose],
+  );
+
+  const handleAnimationComplete = useCallback(
+    (definition: AnimationDefinition) => {
+      if (definition !== "exit") return;
+      pendingRef.current?.();
+      pendingRef.current = null;
+      onClose();
+    },
+    [onClose],
+  );
 
   // Low tier keeps the same component and drops only the backdrop, so the
   // list is never a different, lesser screen — it is this screen, full width.
   const showBackdrop = mapBackdrop;
 
-  /** Confirming sets the tab, which is what the existing wipe listens to. */
+  /**
+   * Confirming sets the tab, which is what the existing wipe listens to. The
+   * tab only changes once the map has left, so the wipe plays after this
+   * screen rather than underneath it — two full-viewport animations at once is
+   * exactly the kind of overlap worth avoiding here.
+   */
   const confirm = useCallback(
-    (id: TabId) => {
-      setActiveTab(id);
-      onClose();
-    },
-    [setActiveTab, onClose],
+    (id: TabId) => requestClose(() => setActiveTab(id)),
+    [requestClose, setActiveTab],
   );
 
   // Clicking selects; clicking the already-selected entry confirms it. Same
@@ -69,7 +114,7 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        return onClose();
+        return requestClose();
       }
       if (e.key === "Enter") {
         e.preventDefault();
@@ -90,15 +135,23 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, confirm, onClose]);
+  }, [selected, confirm, requestClose]);
 
   return (
-    <div
+    <motion.div
       ref={dialogRef}
       tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-label="Select destination"
+      {...(reducedMotion
+        ? {}
+        : {
+            variants: mapScreenVariants,
+            initial: "initial" as const,
+            animate: closing ? ("exit" as const) : ("enter" as const),
+            onAnimationComplete: handleAnimationComplete,
+          })}
       className="fixed inset-0 z-30 flex flex-col bg-p3-black p-4 sm:p-6"
     >
       <div className="mb-4 flex items-start justify-between gap-4">
@@ -208,7 +261,7 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={onClose}
+            onClick={() => requestClose()}
             className={`notched px-4 py-2 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white [--fill:theme(colors.p3-black.panel)] ${FOCUS_RING}`}
           >
             Close
@@ -221,6 +274,6 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -36,8 +36,14 @@ export const sliceVariants: Variants = {
   // easeOut, not the shared BLADE curve: a reveal begins at zero area, so an
   // ease-in-out spends its slow opening on an empty panel. Front-loading it
   // means the content is already mostly there by the time the eye lands.
+  // The resting shape is inflated 2% past every edge. The clip does not
+  // disappear when the wipe finishes — it stays on the panel for as long as the
+  // tab is open — so any child that paints outside its own box gets sliced by
+  // it. The card hover grows its frame ~4.7px and the left column sits exactly
+  // on the old 0% boundary, which cut that border clean off. The right edge
+  // keeps its 30-point slant (132 -> 102), so the diagonal reads the same.
   enter: {
-    clipPath: "polygon(0 0, 130% 0, 100% 100%, 0 100%)",
+    clipPath: "polygon(-2% -2%, 132% -2%, 102% 102%, -2% 102%)",
     opacity: 1,
     transition: {
       duration: 0.32,
@@ -152,5 +158,34 @@ export const headingLetter: Variants = {
     y: "0%",
     opacity: 1,
     transition: { duration: 0.42, ease: EASE_SNAP },
+  },
+};
+
+/**
+ * Map screen entrance and exit.
+ *
+ * Transform only — no opacity, no scale, no clip-path. The map is a
+ * full-viewport opaque field, so fading it would make it a translucent
+ * full-screen layer mid-animation, which is the compositing cost that has hit
+ * this project repeatedly. Scaling it would re-rasterise every glyph on the
+ * screen the way the card hover used to. A translate distorts nothing and
+ * composites on the GPU.
+ *
+ * The diagonal comes from moving on both axes rather than from a skew, so the
+ * motion reads along the site's angle without bending the content.
+ */
+export const mapScreenVariants: Variants = {
+  initial: { x: "100%", y: "10%" },
+  enter: {
+    x: "0%",
+    y: "0%",
+    transition: { duration: 0.36, ease: EASE_BLADE },
+  },
+  // Quicker leaving than arriving: the exit is a hand-off, and on a
+  // confirmation the tab wipe is queued up behind it.
+  exit: {
+    x: "100%",
+    y: "10%",
+    transition: { duration: 0.26, ease: EASE_BLADE },
   },
 };
