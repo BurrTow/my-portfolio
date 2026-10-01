@@ -36,6 +36,13 @@ export interface Certificate {
   date?: string;
   /** Printed on the certificate itself; shown so a claim can be checked. */
   credentialId?: string;
+  /**
+   * Path to the certificate scan, served from `public/` (e.g.
+   * "/certificates/ccna-itn.png"). Present means the card opens a lightbox;
+   * absent means the card stays inert, so a missing file can never produce an
+   * empty modal.
+   */
+  image?: string;
   verifyUrl?: string;
 }
 
