@@ -23,9 +23,19 @@ export const projects: Project[] = [
       "Vite",
       "ESLint",
     ],
-    // repo: "https://github.com/sheleek1n/Sia2-Chelsys-burger",
+    repo: "https://github.com/sheleek1n/chelsys-burger-system",
     repoOwnedByOther: true,
     teamSize: 3,
+    // Desktop app, so stills rather than a frame or a clip. Paths are declared
+    // ahead of the files; the panel shows a placeholder until they land.
+    demo: {
+      type: "images",
+      images: [
+        "/demos/chelsys/01.png",
+        "/demos/chelsys/02.png",
+        "/demos/chelsys/03.png",
+      ],
+    },
   },
   {
     id: "gastoai",
@@ -36,6 +46,12 @@ export const projects: Project[] = [
     // repo: "https://github.com/sheleek1n/GastoAI-Expense-Tracker-App",
     repoOwnedByOther: true,
     teamSize: 3,
+    // Mobile app: nothing to frame, so a recorded walkthrough.
+    demo: {
+      type: "video",
+      url: "/demos/gastok.mp4",
+      poster: "/demos/gastok-poster.jpg",
+    },
   },
   {
     id: "basic-subnet-calculator",
@@ -52,5 +68,10 @@ export const projects: Project[] = [
       "GitHub Pages",
     ],
     repo: "https://github.com/BurrTow/subnetct",
+    // The only one that is already hosted, so it can be framed for real.
+    demo: {
+      type: "live",
+      url: "https://burrtow.github.io/subnetct/",
+    },
   },
 ];

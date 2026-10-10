@@ -5,6 +5,7 @@ import { PendingLabel } from "@/components/ui/PendingLabel";
 import { Panel } from "@/components/ui/Panel";
 import { Tag } from "@/components/ui/Tag";
 import { projectCredit } from "@/features/projects/projectCredit";
+import { DemoPanel } from "@/features/projects/DemoPanel";
 
 export function ProjectDetail({
   project,
@@ -59,6 +60,9 @@ export function ProjectDetail({
           <PendingLabel>Repo coming soon</PendingLabel>
         )}
       </div>
+      {/* Below the links rather than instead of them: the source and the demo
+          answer different questions and a reader may want either. */}
+      <DemoPanel project={project} />
     </Panel>
   );
 }

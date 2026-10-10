@@ -9,6 +9,28 @@ export interface SiteIdentity {
   location?: string;
 }
 
+/**
+ * An interactive preview of a project, shown in the detail view.
+ *
+ * Three shapes rather than one, because the projects differ in kind: a web app
+ * can be framed live, a mobile app can only be filmed, and a desktop app is
+ * stills. Everything here is loaded on demand — see DemoPanel — so a project
+ * with a demo costs nothing until someone asks for it.
+ *
+ * Every field but `type` is optional on purpose. A demo declared before its
+ * files exist renders a "coming soon" state rather than broken media, which is
+ * the normal case while a recording is still being made.
+ */
+export interface ProjectDemo {
+  type: "live" | "video" | "images";
+  /** `live`: the page to frame. `video`: the clip to play. */
+  url?: string;
+  /** `video` only. Also doubles as the probe for whether the clip exists. */
+  poster?: string;
+  /** `images` only. Served from `public/`, in display order. */
+  images?: string[];
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -26,6 +48,8 @@ export interface Project {
   /** Headcount for group work. Omitted entirely for solo projects. */
   teamSize?: number;
   year?: number;
+  /** Absent means the detail view renders no demo section at all. */
+  demo?: ProjectDemo;
 }
 
 export interface Certificate {
