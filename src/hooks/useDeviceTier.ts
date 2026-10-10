@@ -35,6 +35,10 @@ export function detectTier(): PerfTier {
   return "low";
 }
 
+/**
+ * Applies the static guess once on mount. Runs before anything heavy renders;
+ * `useFrameMonitor` corrects it afterwards from real frame times.
+ */
 export function useDeviceTier() {
   const setTier = usePerfStore((s) => s.setTier);
   useEffect(() => {

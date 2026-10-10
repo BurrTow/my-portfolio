@@ -4,6 +4,12 @@ import { TABS, type TabId } from "@/store/useUIStore";
 /**
  * Arrow-key navigation across the tab list (Left/Up = previous, Right/Down =
  * next, Home/End = first/last), matching the game menu's directional feel.
+ *
+ * Returns a handler for the tablist container rather than binding to the
+ * window: these keys only mean "change tab" while the nav has focus, and the
+ * map screen binds the same keys for its own list.
+ *
+ * Selection wraps, so holding a direction never dead-ends.
  */
 export function useArrowKeyTabNav(
   activeTab: TabId,

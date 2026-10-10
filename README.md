@@ -1,168 +1,155 @@
-# Portfolio — Persona 3 Reload-styled menu UI
+# Portfolio
 
-A personal portfolio whose navigation behaves like the Persona 3 Reload menu
-system: diagonal blade cuts, a snappy selection highlight, and a slice-wipe
-transition between tabs — built on a beige/black (paper + ink) palette.
+A personal portfolio built as a Persona 3 Reload–styled menu interface: a title
+screen, a map you pick a destination from, and five content tabs behind it.
+
+Everything on the site is driven by typed data files — there is no CMS and no
+hardcoded content in components. Adding a project or a certificate means editing
+one array.
+
+**Live:** _not deployed yet — replace this line with the URL once it is._
 
 ## Tech stack
 
-| Layer | Technology |
+| | |
 | --- | --- |
-| Framework | React 18 |
-| Language | TypeScript (strict mode) |
-| Build tool | Vite 5 |
-| Styling | Tailwind CSS 3 |
-| Animation | Framer Motion 11 |
-| State | Zustand 4 |
-| Linting | ESLint 9 + typescript-eslint |
-| Fonts | Arsenal + Zen Kaku Gothic New (Google Fonts) |
+| Framework | React 18 + TypeScript (strict) |
+| Build | Vite 5 |
+| Styling | Tailwind CSS 3, with custom cut-corner utilities |
+| Animation | Framer Motion — [the only animation library, deliberately](docs/adr/0001-framer-motion-only.md) |
+| State | Zustand (two small stores) |
+| Lint | ESLint 9 + typescript-eslint |
 
-### Notes on the choices
+## Setup
 
-- **Vite + React 18 + TypeScript** (strict mode)
-- **Tailwind CSS** — color tokens, clip-path utilities, and motion easings
-  defined in [tailwind.config.js](tailwind.config.js). Note the `notched` /
-  `bladed` utilities: a plain `border` next to a `clip-path` renders broken
-  (the clip erases the border along the diagonal and leaves the straight
-  edges hanging), so outlined cut-corner surfaces are built from two clipped
-  layers instead. Set the inner color with `[--fill:...]`, the outline color
-  with `[--edge:...]`, and its thickness with `[--edge-w:...]`.
-- **Framer Motion** — all transitions pull from the shared presets in
-  [src/theme/motion.ts](src/theme/motion.ts)
-- **Zustand** — tiny global store for the active tab and intro-seen flag
-  ([src/store/useUIStore.ts](src/store/useUIStore.ts))
-- **No React Router.** There are no distinct routes here, just one screen
-  with four menu panels, so tab state lives in Zustand instead — see the
-  comment at the top of `useUIStore.ts` for the reasoning.
+Requires Node 18+.
 
-### Fonts
+```bash
+npm ci          # install exactly what the lockfile pins
+npm run dev     # http://localhost:5173
+```
 
-Persona 3/4 use two Fontworks faces: **FOT-Chiaro Std B** (display) and
-**FOT-Skip Std B** (dialogue/UI). Both are commercial, so the stacks in
-[tailwind.config.js](tailwind.config.js) name them first and fall back:
+### Scripts
 
-| Tier | Display | UI |
-| --- | --- | --- |
-| Real font, installed locally | `FOT-Chiaro Std B` | `FOT-Skip Std B` |
-| Adobe Fonts web kit | `fot-chiaro-std` | — (not on Adobe Fonts) |
-| Free OFL stand-in | `Arsenal` | `Zen Kaku Gothic New` |
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server with HMR |
+| `npm run build` | `tsc -b` then `vite build` — typecheck is part of the build |
+| `npm run lint` | ESLint over the repo |
+| `npm run preview` | Serve the production build locally |
 
-So it renders authentically on a machine that has the fonts installed, and
-degrades to a close free match for everyone else. The free tier is loaded
-from Google Fonts in [index.html](index.html).
+`postinstall` points `core.hooksPath` at `.githooks/`, which installs a
+`commit-msg` hook. There is no test suite yet; `npm run build` is the gate.
 
-To serve the real Chiaro to all visitors, activate
-[FOT-Chiaro Std on Adobe Fonts](https://fonts.adobe.com/fonts/fot-chiaro-std)
-(web use is included with a Creative Cloud plan) and uncomment the
-`use.typekit.net` link in `index.html` with your kit id — the stacks already
-name it, so nothing else changes. FOT-Skip is not on Adobe Fonts; it's only
-available through Fontworks' LETS or mojimo subscriptions.
+## Folder structure
 
-**Don't commit the Fontworks font files.** Having them installed on your own
-machine is fine; checking them into the repo or serving them from the site
-would be redistributing a licensed font.
-
-## Project structure
-
-```text
+```
 src/
   components/
-    layout/        Shell, Nav (desktop blade menu + mobile tab bar), BackgroundFX
-    ui/             Button, LinkButton, Card, Panel, Tag, SectionHeading
-    transitions/    SliceTransition (tab wipe), IntroSequence (boot screen)
-  features/
-    projects/       ProjectsTab, ProjectCard, ProjectDetail
-    certificates/   CertificatesTab, CertificateCard
-    links/          ReposTab, RepoCard
-    resume/         ResumeTab
-  data/             projects.ts, certificates.ts, links.ts, resume.ts — typed content
-  theme/            motion.ts — every Framer Motion variant/transition, defined once
-  hooks/            usePrefersReducedMotion, useArrowKeyTabNav
-  store/            useUIStore.ts — active tab + intro-seen state
-  types/            content.ts — Project, Certificate, RepoLink, ResumeMeta
+    layout/        Shell, Nav, BackgroundFX
+    transitions/   IntroSequence, IntroExit, MaskWipe, SliceTransition
+    ui/            Shared primitives (Card, Button, TabIcon, ImageLightbox…)
+  data/            All site content — see "Adding content"
+  features/        One folder per tab, plus map/
+  hooks/           Device tier, frame monitor, reduced motion, arrow-key nav
+  store/           useUIStore (navigation), usePerfStore (capability flags)
+  theme/           motion.ts and introMotion.ts — two separate motion systems
+  types/content.ts Shared content types
+public/
+  certificates/    Certificate scans (.webp)
+  demos/           Project demo media — see docs/adding-demos.md
 ```
+
+Further reading: [architecture](docs/architecture.md) ·
+[performance](docs/performance.md) · [adding demos](docs/adding-demos.md) ·
+[decision records](docs/adr/)
 
 ## Adding content
 
-Nothing below `data/` needs a component change — add an entry to the array
-and it shows up.
+All content lives in `src/data/`. Types are in
+[`src/types/content.ts`](src/types/content.ts); the compiler will tell you what
+a given entry is missing.
 
-- **Projects**: add an object to `src/data/projects.ts` matching the
-  `Project` type in `src/types/content.ts`. Only `id`, `title`,
-  `description`, and `tech` are required; `link`, `repo`, and `year` are
-  optional.
-- **Certificates**: add to `src/data/certificates.ts` (`id`, `name`,
-  `issuer` required; `description`, `date`, `verifyUrl` optional).
-- **Repos**: add to `src/data/links.ts` (`name`, `description`, `url`,
-  optional `language`/`stars`).
-- **Resume**: replace `public/resume-placeholder.pdf` with your real PDF
-  (keep the filename, or update `fileUrl` in `src/data/resume.ts`), and bump
-  `updated`.
-- **Screenshots**: project cards currently render a placeholder block instead
-  of an image. To wire in real thumbnails, add a `thumbnail` path to the
-  `Project` data and swap the placeholder `<div>` in `ProjectCard.tsx` /
-  `ProjectDetail.tsx` for an `<img>`.
+### A project
 
-### Empty states
+Append to `projects` in `src/data/projects.ts`:
 
-Each tab renders a muted `EmptyState` panel when its data array is empty,
-rather than an empty grid. `links.ts` currently ships empty on purpose, so
-the Repos tab reads "Repositories coming soon" until real entries are added.
-
-Projects work the same way at field level: a project with no `repo` shows an
-inert "Repo coming soon" chip in place of the Source button. Repo URLs are
-kept commented out in `projects.ts` — uncomment one once that repository is
-public and the chip becomes a real link with no component change.
-
-## Interactivity notes
-
-- **Intro**: a ~1.4s skippable boot sequence, shown once per browser session
-  (tracked via `sessionStorage`, see `useUIStore.ts`). It's skipped entirely
-  under `prefers-reduced-motion`.
-- **Tab transitions**: `SliceTransition` clip-paths the outgoing/incoming
-  panel into a diagonal wipe. Falls back to a plain swap (no animation) under
-  `prefers-reduced-motion`.
-- **Nav**: a vertical blade menu on desktop (`md:` and up, fixed left), a
-  bottom tab bar on mobile — both driven by the same `TABS` list and
-  Zustand state, so there's one source of truth for the active tab. Keyboard
-  users can arrow through tabs (Left/Up, Right/Down, Home/End) via
-  `useArrowKeyTabNav`.
-- **Reduced motion**: respected in three places — the global CSS fallback in
-  `index.css`, the intro sequence, and the background stripe animation.
-
-## Development
-
-```bash
-npm install
-npm run dev      # start dev server
-npm run build    # type-check + production build
-npm run lint      # eslint
+```ts
+{
+  id: "my-project",
+  title: "My Project",
+  description: "One or two sentences.",
+  tech: ["TypeScript", "Vite"],
+  repo: "https://github.com/you/my-project",   // omit → "Repo coming soon"
+  teamSize: 3,                                  // omit for solo work
+  repoOwnedByOther: true,                       // repo under a teammate's account
+}
 ```
 
-### Git hooks
+`teamSize` and `repoOwnedByOther` drive the credit line under the card, so
+staffing and repo ownership are stated up front rather than inferred from a URL.
 
-`npm install` also runs `scripts/install-hooks.mjs`, which points
-`core.hooksPath` at the tracked [.githooks](.githooks) directory. Cloning and
-installing is all that is needed — there is no file to copy into `.git/hooks`
-and nothing to remember on a new machine.
+### A certificate
 
-The one hook, `commit-msg`, strips AI attribution trailers from every commit
-message before it is finalised:
+Append to `certificates` in `src/data/certificates.ts`:
 
-- `Co-Authored-By: Claude …`
-- `Generated with [Claude Code](…)`
-- `Claude-Session: …`
+```ts
+{
+  id: "cisco-intro-networks",
+  name: "CCNA: Introduction to Networks",
+  issuer: "Cisco Networking Academy",
+  date: "January 20, 2026",
+  credentialId: "111735458",                    // optional
+  image: "/certificates/ccna-itn.webp",         // optional
+}
+```
 
-Only Claude trailers are matched, so human `Co-Authored-By` lines survive, as
-does any ordinary prose that happens to mention Claude.
+With `image` set the card opens a full-size lightbox. Without it the card is
+inert — no click target, so a missing file can never open an empty modal. Put
+the file in `public/certificates/` and export WebP at ~1600px wide.
 
-Because `core.hooksPath` is written to `.git/config`, which is never tracked,
-no machine-specific state is created and nothing needs git-ignoring.
+### A repo link
 
-Notes:
+Append to `repoLinks` in `src/data/links.ts`. The Repos tab shows a
+"coming soon" empty state while the array is empty, which is its current state.
 
-- It only affects **future** commits. Messages already in history keep their
-  trailers unless the history is rewritten.
-- `npm install --ignore-scripts` skips the setup. Run
-  `git config core.hooksPath .githooks` once by hand in that case.
-- Bypassing it with `git commit --no-verify` also skips the stripping.
+### A demo
+
+Add a `demo` block to a project. Full guide: [adding demos](docs/adding-demos.md).
+
+```ts
+demo: { type: "live",   url: "https://example.github.io/app/" }
+demo: { type: "video",  url: "/demos/app.mp4", poster: "/demos/app-poster.jpg" }
+demo: { type: "images", images: ["/demos/app/01.png", "/demos/app/02.png"] }
+```
+
+Media is loaded on demand and a missing file renders "Demo coming soon" rather
+than a broken frame, so you can wire a demo up before the recording exists.
+
+## Deploying
+
+`npm run build` emits a fully static `dist/`. There is no server component and
+no environment configuration, so any static host works — GitHub Pages, Netlify,
+Cloudflare Pages.
+
+Two things to know before the first deploy:
+
+- **Base path.** If you host under a subpath (e.g. `user.github.io/portfolio/`),
+  set `base` in `vite.config.ts`. At a domain root no change is needed.
+- **`public/` ships verbatim.** Certificate scans carry your full name and
+  credential numbers, and demo recordings may show real data. Both become
+  permanently public. See the warning in
+  [adding demos](docs/adding-demos.md#before-you-record).
+
+## Performance tiering
+
+The site measures the device instead of assuming. A cheap static guess runs
+first (`useDeviceTier`), then `useFrameMonitor` samples real frame times for a
+few seconds and downgrades if the device is not keeping up — dropping the
+drifting backdrop first, then the map illustration. Navigation is never gated;
+only decoration comes off.
+
+One regression class has bitten this project repeatedly: **a translucent
+full-viewport layer animating over other animating content**. Overlays here are
+opaque for that reason. Details and the 6× CPU throttle test procedure are in
+[performance](docs/performance.md).

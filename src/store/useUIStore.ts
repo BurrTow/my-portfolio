@@ -5,6 +5,8 @@ import { create } from "zustand";
 // router would add a dependency and history-stack complexity (e.g. back-button
 // semantics across tabs) without any real benefit over a Zustand-held TabId.
 // About sits last so Projects remains the landing view.
+/** Source of truth for tab order. Nav, arrow-key navigation and the map pins
+ * all derive from this, so adding a tab here is most of the work. */
 export const TABS = [
   "projects",
   "certificates",
@@ -42,9 +44,18 @@ interface UIState {
   navSeq: number;
   /** Mirrors the map overlay so occluded work can be paused while it is up. */
   mapOpen: boolean;
+  /**
+   * Hold this true for as long as the map is *visible*, including while it
+   * animates away. MapScreen runs its own exit and only reports closed once it
+   * finishes, which is what keeps BackgroundFX frozen under a semi-transparent
+   * screen. Flipping it at the start of the exit reintroduces the regression in
+   * docs/performance.md.
+   */
   setMapOpen: (open: boolean) => void;
+  /** Also bumps `navSeq`, which is what actually drives the tab transition. */
   setActiveTab: (tab: TabId) => void;
   introDone: boolean;
+  /** Marks the intro seen for this browser as well as this session. */
   finishIntro: () => void;
 }
 

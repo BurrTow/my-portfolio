@@ -1,5 +1,10 @@
 import { create } from "zustand";
 
+/**
+ * Coarse capability bucket. A starting guess from `detectTier`, which
+ * `useFrameMonitor` may later override downward — never upward, since a device
+ * that has already missed frames is not going to earn them back.
+ */
 export type PerfTier = "high" | "mid" | "low";
 
 /**
@@ -30,6 +35,8 @@ interface PerfState extends PerfFlags {
   tier: PerfTier;
   /** True once the runtime frame monitor has overridden the static guess. */
   downgraded: boolean;
+  /** Replaces every flag with that tier's defaults. Used for the initial
+   * guess and by the dev-only `__setTier` handle. */
   setTier: (tier: PerfTier) => void;
   /** Drops the next capability on the ladder. No-op once everything is off. */
   downgrade: () => void;
