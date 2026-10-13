@@ -191,6 +191,15 @@ export const mapScreenVariants: Variants = {
     opacity: 1,
     transition: { duration: MAP_ENTER_SEC, ease: EASE_SNAP },
   },
+  /**
+   * Confirming a destination, as opposed to dismissing the map. The panel only
+   * fades: the zoom toward the chosen pin runs on the backdrop itself, where
+   * the pin's percentage coordinates give an exact transform-origin.
+   */
+  travel: {
+    opacity: 0,
+    transition: { duration: 0.28, ease: "easeIn" },
+  },
   // Leaving is quicker than arriving, and eases in rather than out, so the
   // panel feels dismissed rather than gently withdrawn.
   exit: {

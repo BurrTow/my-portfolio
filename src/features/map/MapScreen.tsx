@@ -1,14 +1,32 @@
-import { motion, type AnimationDefinition } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  type AnimationDefinition,
+} from "framer-motion";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { useUIStore, type TabId } from "@/store/useUIStore";
 import { usePerfStore } from "@/store/usePerfStore";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
-import { MAP_PINS } from "@/features/map/mapNodes";
-import { CityscapeBackdrop } from "@/features/map/CityscapeBackdrop";
+import { MAP_PINS, pinById } from "@/features/map/mapNodes";
+import {
+  CityscapeBackdrop,
+  type DepthMode,
+} from "@/features/map/CityscapeBackdrop";
 import { MapDetail } from "@/features/map/MapDetail";
 import { TabIcon } from "@/components/ui/TabIcon";
 import { mapScreenVariants } from "@/theme/motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+
+/** How far the map zooms toward the chosen pin before handing over. */
+const TRAVEL_SCALE = 1.6;
+const TRAVEL_SEC = 0.28;
 
 /** Rounded key cap and its action, replacing the plain-text prompt line. */
 function KeyHint({ glyph, label }: { glyph: string; label: string }) {
@@ -47,10 +65,90 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
   const activeTab = useUIStore((s) => s.activeTab);
   const setActiveTab = useUIStore((s) => s.setActiveTab);
   const mapBackdrop = usePerfStore((s) => s.mapBackdrop);
+  const tier = usePerfStore((s) => s.tier);
   const [selected, setSelected] = useState<TabId>(activeTab);
   const [closing, setClosing] = useState(false);
+  const [traveling, setTraveling] = useState(false);
+  const [travelId, setTravelId] = useState<TabId | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const reducedMotion = usePrefersReducedMotion();
+
+  // Mouse-first: a fine pointer gets hover affordances and click-to-travel.
+  // Touch keeps select-then-confirm, because there is no hover to preview with.
+  const [finePointer, setFinePointer] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: fine)").matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: fine)");
+    const onChange = (e: MediaQueryListEvent) => setFinePointer(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const transitioning = closing || traveling;
+  // low tier and reduced motion drop to an instant swap; medium keeps hover and
+  // the travel zoom but not the parallax; high gets everything.
+  const instantNav = reducedMotion || tier === "low";
+  const hoverFx = !instantNav && finePointer;
+  /**
+   * high gets the perspective stack and tilt, medium the depth shift alone,
+   * and low or reduced motion a still render — the painted depth stays either
+   * way. Reading `tier` from the store means a live downgrade from the frame
+   * monitor takes effect while the map is open.
+   */
+  const depthMode: DepthMode =
+    instantNav || !finePointer ? "static" : tier === "high" ? "3d" : "shift";
+  const parallax = depthMode !== "static";
+
+  // Pointer offset from the map's centre, -1..1 on each axis. Motion values so
+  // moving the mouse never re-renders this component.
+  const pxRaw = useMotionValue(0);
+  const pyRaw = useMotionValue(0);
+  const spring = { stiffness: 120, damping: 20, mass: 0.4 };
+  const px = useSpring(pxRaw, spring);
+  const py = useSpring(pyRaw, spring);
+  const rafRef = useRef(0);
+  // Measured on enter, not per move: a layout read inside a pointermove
+  // handler is the thing that makes this kind of effect expensive.
+  const rectRef = useRef<DOMRect | null>(null);
+
+  const restParallax = useCallback(() => {
+    pxRaw.set(0);
+    pyRaw.set(0);
+  }, [pxRaw, pyRaw]);
+
+  // Park the pointer values whenever nothing should be reacting to them: a
+  // transition in flight, or a tier that has just been downgraded under us.
+  useEffect(() => {
+    if (transitioning || !parallax) restParallax();
+  }, [transitioning, parallax, restParallax]);
+
+  useEffect(
+    () => () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    },
+    [],
+  );
+
+  const handlePointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      if (!parallax || transitioning) return;
+      const r = rectRef.current;
+      if (!r) return;
+      // Coalesce to one update per frame; the rect is already cached, so the
+      // handler itself only reads the event.
+      const { clientX, clientY } = e;
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = 0;
+        pxRaw.set(((clientX - r.left) / r.width - 0.5) * 2);
+        pyRaw.set(((clientY - r.top) / r.height - 0.5) * 2);
+      });
+    },
+    [parallax, transitioning, pxRaw, pyRaw],
+  );
   // Held across the exit so a confirmed destination is applied as the screen
   // finishes leaving, rather than while it is still on its way out.
   const pendingRef = useRef<(() => void) | null>(null);
@@ -75,7 +173,7 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
 
   const handleAnimationComplete = useCallback(
     (definition: AnimationDefinition) => {
-      if (definition !== "exit") return;
+      if (definition !== "exit" && definition !== "travel") return;
       pendingRef.current?.();
       pendingRef.current = null;
       onClose();
@@ -94,8 +192,21 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
    * exactly the kind of overlap worth avoiding here.
    */
   const confirm = useCallback(
-    (id: TabId) => requestClose(() => setActiveTab(id)),
-    [requestClose, setActiveTab],
+    (id: TabId) => {
+      if (transitioning) return;
+      if (instantNav) {
+        setActiveTab(id);
+        onClose();
+        return;
+      }
+      // Swap the destination now, while the opaque map still covers it, so the
+      // old page is never on screen during the hand-off. MaskWipe is already
+      // listening on navSeq and takes it from here.
+      setActiveTab(id);
+      setTravelId(id);
+      setTraveling(true);
+    },
+    [transitioning, instantNav, setActiveTab, onClose],
   );
 
   // Clicking selects; clicking the already-selected entry confirms it. Same
@@ -103,6 +214,12 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
   const choose = useCallback(
     (id: TabId) => (id === selected ? confirm(id) : setSelected(id)),
     [selected, confirm],
+  );
+
+  /** Pins only: with a mouse, one click is the whole gesture. */
+  const choosePin = useCallback(
+    (id: TabId) => (finePointer ? confirm(id) : choose(id)),
+    [finePointer, confirm, choose],
   );
 
   // Move focus into the dialog so keys land here and screen readers follow.
@@ -149,10 +266,16 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
         : {
             variants: mapScreenVariants,
             initial: "initial" as const,
-            animate: closing ? ("exit" as const) : ("enter" as const),
+            animate: traveling
+              ? ("travel" as const)
+              : closing
+                ? ("exit" as const)
+                : ("enter" as const),
             onAnimationComplete: handleAnimationComplete,
           })}
-      className="fixed inset-0 z-30 flex flex-col bg-p3-black p-4 sm:p-6"
+      className={`fixed inset-0 z-30 flex flex-col bg-p3-black p-4 sm:p-6 ${
+        transitioning ? "pointer-events-none" : ""
+      }`}
     >
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
@@ -210,44 +333,90 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
 
         {/* Backdrop + pins */}
         {showBackdrop && (
-          <div className="notched relative min-h-[18rem] flex-1 overflow-hidden [--fill:theme(colors.p3-black.panel)]">
-            <CityscapeBackdrop />
-            {MAP_PINS.map((pin) => {
-              const isSel = pin.id === selected;
-              return (
-                <button
-                  key={pin.id}
-                  onClick={() => choose(pin.id)}
-                  onMouseEnter={() => setSelected(pin.id)}
-                  onFocus={() => setSelected(pin.id)}
-                  aria-label={pin.label}
-                  style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                  className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 p-1 ${FOCUS_RING}`}
-                >
-                  <span
-                    className={`whitespace-nowrap rounded-full px-3 py-1 font-ui text-xs font-semibold uppercase tracking-wide transition-colors duration-150 ${
-                      isSel
-                        ? "bg-p3-red text-p3-white"
-                        : "bg-p3-black/85 text-p3-white/80"
-                    }`}
-                  >
-                    {pin.label}
-                  </span>
-                  <span
-                    className={`flex h-8 w-8 rotate-45 items-center justify-center border-2 transition-colors duration-150 ${
-                      isSel
-                        ? "border-p3-red bg-p3-blue-deep"
-                        : "border-p3-blue/70 bg-p3-black"
-                    }`}
-                  >
-                    <TabIcon
-                      id={pin.id}
-                      className="h-4 w-4 -rotate-45 text-p3-white"
-                    />
-                  </span>
-                </button>
-              );
-            })}
+          <div
+            onPointerEnter={(e) => {
+              if (parallax)
+                rectRef.current = e.currentTarget.getBoundingClientRect();
+            }}
+            onPointerMove={handlePointerMove}
+            onPointerLeave={restParallax}
+            className="notched relative min-h-[18rem] flex-1 overflow-hidden [--fill:theme(colors.p3-black.panel)]"
+          >
+            <motion.div
+              className="absolute inset-0"
+              style={{
+                transformOrigin: travelId
+                  ? `${pinById(travelId).x}% ${pinById(travelId).y}%`
+                  : "50% 50%",
+              }}
+              animate={
+                traveling
+                  ? { scale: TRAVEL_SCALE, opacity: 0 }
+                  : { scale: 1, opacity: 1 }
+              }
+              transition={{ duration: TRAVEL_SEC, ease: "easeIn" }}
+            >
+              {/* Pins render on the near plane, so their hit areas ride the
+                  same transform as the buildings they sit on. */}
+              <CityscapeBackdrop px={px} py={py} mode={depthMode}>
+                {MAP_PINS.map((pin) => {
+                  const isSel = pin.id === selected;
+                  return (
+                    <button
+                      key={pin.id}
+                      onClick={() => choosePin(pin.id)}
+                      // pointerenter, not mouseenter: a touch tap fires the
+                      // compatibility mouse events too, which would pre-select
+                      // the pin and turn the first tap into a confirm.
+                      onPointerEnter={(e) => {
+                        if (e.pointerType === "mouse") setSelected(pin.id);
+                      }}
+                      // :focus-visible, not every focus: a tap focuses the pin
+                      // too, and pre-selecting it would turn the first tap into
+                      // a confirm. Keyboard focus still selects as before.
+                      onFocus={(e) => {
+                        if (e.currentTarget.matches(":focus-visible")) {
+                          setSelected(pin.id);
+                        }
+                      }}
+                      aria-label={pin.label}
+                      style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
+                      className={`group pointer-events-auto absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 p-1 ${
+                        hoverFx ? "cursor-pointer" : ""
+                      } ${FOCUS_RING}`}
+                    >
+                      <span
+                        className={`clip-notch whitespace-nowrap px-3 py-1 font-ui text-xs font-semibold uppercase tracking-wide transition-[colors,transform] duration-150 ${
+                          hoverFx ? "group-hover:-translate-y-0.5" : ""
+                        } ${
+                          isSel
+                            ? "bg-p3-red text-p3-white"
+                            : "bg-p3-black/85 text-p3-white/80"
+                        }`}
+                      >
+                        {pin.label}
+                      </span>
+                      <span
+                        className={`flex h-8 w-8 rotate-45 items-center justify-center border-2 transition-[colors,transform,box-shadow] duration-150 ${
+                          hoverFx
+                            ? "group-hover:scale-[1.12] group-hover:shadow-[0_0_14px_3px_rgba(43,111,255,0.5)] group-active:scale-95"
+                            : ""
+                        } ${
+                          isSel
+                            ? "border-p3-red bg-p3-blue-deep"
+                            : "border-p3-blue/70 bg-p3-black"
+                        }`}
+                      >
+                        <TabIcon
+                          id={pin.id}
+                          className="h-4 w-4 -rotate-45 text-p3-white"
+                        />
+                      </span>
+                    </button>
+                  );
+                })}
+              </CityscapeBackdrop>
+            </motion.div>
           </div>
         )}
       </div>
