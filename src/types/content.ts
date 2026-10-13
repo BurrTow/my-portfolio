@@ -9,6 +9,14 @@ export interface SiteIdentity {
   location?: string;
 }
 
+/** One carousel frame. `alt` describes it for screen readers, `caption` is
+ * shown to everyone under the image. */
+export interface DemoImage {
+  src: string;
+  alt: string;
+  caption: string;
+}
+
 /**
  * An interactive preview of a project, shown in the detail view.
  *
@@ -28,7 +36,7 @@ export interface ProjectDemo {
   /** `video` only. Also doubles as the probe for whether the clip exists. */
   poster?: string;
   /** `images` only. Served from `public/`, in display order. */
-  images?: string[];
+  images?: DemoImage[];
 }
 
 export interface Project {
@@ -36,6 +44,7 @@ export interface Project {
   title: string;
   description: string;
   tech: string[];
+  /** 16:9 card image, served from `public/`. Absent keeps the plain placeholder. */
   thumbnail?: string;
   link?: string;
   repo?: string;

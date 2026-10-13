@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { Project, ProjectDemo } from "@/types/content";
+import type { DemoImage, Project, ProjectDemo } from "@/types/content";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -149,48 +149,23 @@ function VideoDemo({
  * Driven three ways so it works on every input: buttons, Left/Right once the
  * strip has focus, and a horizontal swipe on touch.
  */
-function ImageDemo({ images, title }: { images?: string[]; title: string }) {
-  const [usable, setUsable] = useState<string[] | null>(null);
+function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
+  // Frames that 404 are dropped as they fail. Nothing is probed up front:
+  // only the visible frame is ever requested.
+  const [broken, setBroken] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (!images?.length) return setUsable([]);
-    let alive = true;
-    const results: (string | null)[] = new Array(images.length).fill(null);
-    let settled = 0;
-    images.forEach((src, i) => {
-      const img = new Image();
-      const finish = (ok: boolean) => {
-        results[i] = ok ? src : null;
-        if (++settled === images.length && alive) {
-          setUsable(results.filter((s): s is string => s !== null));
-        }
-      };
-      img.onload = () => finish(true);
-      img.onerror = () => finish(false);
-      img.src = src;
-    });
-    return () => {
-      alive = false;
-    };
-  }, [images]);
-
-  if (usable === null) {
-    return (
-      <div
-        aria-hidden
-        className="notched aspect-video [--fill:theme(colors.p3-black.panel)]"
-      />
-    );
-  }
+  const usable = (images ?? []).filter((im) => !broken.includes(im.src));
   if (usable.length === 0) {
     return <ComingSoon hint="Screenshots of this build are being captured." />;
   }
 
   const count = usable.length;
-  const step = (delta: number) => setIndex((i) => (i + delta + count) % count);
+  const i = Math.min(index, count - 1);
+  const current = usable[i];
+  const step = (delta: number) => setIndex((n) => (Math.min(n, count - 1) + delta + count) % count);
 
   return (
     <div>
@@ -220,12 +195,16 @@ function ImageDemo({ images, title }: { images?: string[]; title: string }) {
         <button
           type="button"
           onClick={() => setZoomed(true)}
-          aria-label={`View screenshot ${index + 1} of ${count} full size`}
+          aria-label={`View screenshot ${i + 1} of ${count} full size`}
           className="block h-full w-full"
         >
           <img
-            src={usable[index]}
-            alt={`${title} screenshot ${index + 1} of ${count}`}
+            src={current.src}
+            alt={current.alt}
+            width={1600}
+            height={900}
+            loading={i === 0 ? "eager" : "lazy"}
+            onError={() => setBroken((b) => [...b, current.src])}
             className="h-full w-full object-contain"
           />
         </button>
@@ -252,32 +231,35 @@ function ImageDemo({ images, title }: { images?: string[]; title: string }) {
         )}
       </div>
 
+      <p className="mt-3 font-ui text-sm text-p3-white/70">{current.caption}</p>
+
       {count > 1 && (
-        <div className="mt-3 flex items-center gap-2">
-          {usable.map((src, i) => (
+        <div className="mt-2 flex items-center gap-2">
+          {usable.map((im, n) => (
             <button
-              key={src}
+              key={im.src}
               type="button"
-              onClick={() => setIndex(i)}
-              aria-label={`Go to screenshot ${i + 1}`}
-              aria-current={i === index}
+              onClick={() => setIndex(n)}
+              aria-label={`Go to screenshot ${n + 1}`}
+              aria-current={n === i}
               className={`h-2 w-6 -skew-x-12 ${FOCUS_RING} ${
-                i === index ? "bg-p3-blue" : "bg-p3-white/20"
+                n === i ? "bg-p3-blue" : "bg-p3-white/20"
               }`}
             />
           ))}
           <span className="ml-auto font-ui text-xs uppercase tracking-wide text-p3-white/40">
-            {index + 1} / {count}
+            {i + 1} / {count}
           </span>
         </div>
       )}
 
       {zoomed && (
         <ImageLightbox
-          src={usable[index]}
-          alt={`${title} screenshot ${index + 1} of ${count}`}
+          src={current.src}
+          alt={current.alt}
           title={title}
-          subtitle={`Screenshot ${index + 1} of ${count}`}
+          subtitle={current.caption}
+          footnote={`${i + 1} / ${count}`}
           onClose={() => setZoomed(false)}
           onNavigate={count > 1 ? step : undefined}
         />

@@ -52,17 +52,28 @@ Use for: mobile and desktop apps, anything that cannot be framed.
 ```ts
 demo: {
   type: "images",
-  images: ["/demos/chelsys/01.png", "/demos/chelsys/02.png", "/demos/chelsys/03.png"],
+  images: [
+    {
+      src: "/demos/chelsys/01-dashboard.webp",
+      alt: "Dashboard with daily sales, stock warnings and projected stock runout",
+      caption: "Daily sales, stock warnings, and projected stock runout",
+    },
+    // …
+  ],
 }
 ```
+
+`alt` describes the frame for screen readers; `caption` is shown to everyone,
+under the image in the carousel and under the title in the lightbox. Write them
+differently — the alt says what is on screen, the caption says why it matters.
 
 Prev/next buttons, Left/Right once the strip has focus, and horizontal swipe on
 touch. Clicking a frame opens it full size in the shared lightbox.
 
-Unlike the other two this *does* fetch on mount — the images are the content,
-and probing them is what makes the missing-file state possible. Unreadable
-frames are dropped, so a half-delivered set shows the images that exist rather
-than gaps. If none load, the panel shows "Demo coming soon".
+Only the visible frame is ever requested: the first loads eagerly, the rest as
+you reach them. A frame that 404s is dropped as it fails, so a half-delivered
+set shows the images that exist rather than gaps. If none load, the panel shows
+"Demo coming soon".
 
 Use for: desktop apps, or anything where a video would be overkill.
 
@@ -76,7 +87,7 @@ public/demos/
   gastok.mp4             <project>.mp4
   gastok-poster.jpg      <project>-poster.jpg
   chelsys/               one folder per screenshot set
-    01.png  02.png  03.png
+    01-dashboard.webp  02-new-order.webp  …
 ```
 
 Use lowercase, hyphenated names matching the project. Number screenshots
@@ -107,12 +118,26 @@ ffmpeg -i demo.mp4 -ss 00:00:02 -frames:v 1 -q:v 3 demo-poster.jpg
 | Count | 3–6. Fewer reads as thin, more than six nobody clicks through |
 | Format | WebP or PNG. WebP is dramatically smaller for UI screenshots |
 | Size | Target under ~200 KB each |
+| Naming | `NN-slug.webp` — the number sets carousel order, the slug says what it is |
 
 ```bash
 magick shot.png -resize 1600x -quality 85 01.webp
 ```
 
 If you switch to `.webp`, update the paths in `projects.ts` to match.
+
+## Card thumbnails
+
+Separate from demos. A project may set `thumbnail` to a 16:9 image in
+`public/thumbs/`:
+
+```ts
+thumbnail: "/thumbs/chelsys.webp",
+```
+
+It replaces the grey "Screenshot" placeholder on the project card. Export at
+**800×450**, under ~50 KB — it renders small and there is one per card. Cards
+without a thumbnail keep the placeholder, so this is optional per project.
 
 ## Swapping in real files
 

@@ -26,14 +26,48 @@ export const projects: Project[] = [
     repo: "https://github.com/sheleek1n/chelsys-burger-system",
     repoOwnedByOther: true,
     teamSize: 3,
-    // Desktop app, so stills rather than a frame or a clip. Paths are declared
-    // ahead of the files; the panel shows a placeholder until they land.
+    // Desktop app, so stills rather than a frame or a clip.
+    thumbnail: "/thumbs/chelsys.webp",
     demo: {
       type: "images",
       images: [
-        "/demos/chelsys/01.png",
-        "/demos/chelsys/02.png",
-        "/demos/chelsys/03.png",
+        {
+          src: "/demos/chelsys/01-dashboard.webp",
+          alt: "Dashboard with daily sales, stock warnings and projected stock runout",
+          caption: "Daily sales, stock warnings, and projected stock runout",
+        },
+        {
+          src: "/demos/chelsys/02-new-order.webp",
+          alt: "New order screen with cart, payment method and change calculation",
+          caption: "Ordering with cash and GCash payments and automatic change",
+        },
+        {
+          src: "/demos/chelsys/03-order-history.webp",
+          alt: "Order history table with search and filters",
+          caption: "Searchable order history with payment and status filters",
+        },
+        {
+          src: "/demos/chelsys/04-inventory-log.webp",
+          alt: "Inventory log with category filters and pack status",
+          caption: "Pack-based inventory logging by category",
+        },
+        {
+          src: "/demos/chelsys/05-deliveries.webp",
+          alt: "Purchase orders and deliveries with status badges",
+          caption:
+            "Supplier purchase orders with status tracking and quantity-difference flags",
+        },
+        {
+          src: "/demos/chelsys/06-accounts.webp",
+          alt: "Accounts page with roles and data backup tools",
+          caption: "Role-based accounts plus database backup and restore",
+        },
+        {
+          src: "/demos/chelsys/07-cashier-view.webp",
+          alt: "Cashier view with limited navigation",
+          caption:
+            "Cashiers see only New Order, Order History, and Inventory Log",
+        },
       ],
     },
   },
