@@ -1,6 +1,6 @@
 # ADR 0001 — Framer Motion as the only animation library
 
-**Status:** Accepted
+**Status:** Accepted — amended by [ADR 0007](0007-gsap-in-the-demo-carousel.md)
 **Date:** 2026-10-10
 
 ## Context
@@ -41,3 +41,9 @@ scroll-driven scrubbing, morphing) would be more work here than with GSAP.
 
 Revisit if a requirement genuinely needs timeline orchestration that Framer
 cannot express — not because an effect is merely fiddly to hand-write.
+
+## Amendment
+
+[ADR 0007](0007-gsap-in-the-demo-carousel.md) carves out one exception: GSAP is
+used inside the demo carousel, lazy-loaded so it stays out of the entry chunk.
+Framer Motion remains the app-wide library everywhere else.

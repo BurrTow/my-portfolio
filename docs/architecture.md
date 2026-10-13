@@ -59,6 +59,12 @@ They are separate because sharing them meant every tweak to the opening moment
 also retuned ordinary navigation. `motion.ts` additionally exports the raw
 easing curves (`EASE_SNAP`, `EASE_BLADE`) so keyframe animations can match.
 
+**One exception sits outside both.** The demo carousel in
+[`DemoPanel`](../src/features/projects/DemoPanel.tsx) uses GSAP, loaded with a
+dynamic import when the carousel first mounts, for direction-aware slides and
+a drag that follows the finger. It is the only GSAP in the codebase and it is
+not in the entry chunk — see [ADR 0007](adr/0007-gsap-in-the-demo-carousel.md).
+
 Each transition is deliberately distinct:
 
 - **`SliceTransition`** — diagonal clip-path reveal, for tab-to-tab content swaps.

@@ -54,3 +54,10 @@ necessary. Keep solutions simple and focused:
   for demo media, and [`docs/adr/`](docs/adr/) for decisions and their
   trade-offs. A decision that reverses an ADR should add a new one rather than
   edit the old.
+
+- **Animation libraries.** Framer Motion is the app-wide library. **GSAP may
+  only be imported inside `src/features/projects/DemoPanel.tsx`**, where it is
+  lazy-loaded via `import("gsap")` so it stays out of the entry chunk. Anything
+  else that wants imperative animation is a reason to re-read
+  [`docs/adr/0007-gsap-in-the-demo-carousel.md`](docs/adr/0007-gsap-in-the-demo-carousel.md),
+  not to add a second import.

@@ -16,7 +16,7 @@ one array.
 | Framework | React 18 + TypeScript (strict) |
 | Build | Vite 5 |
 | Styling | Tailwind CSS 3, with custom cut-corner utilities |
-| Animation | Framer Motion — [the only animation library, deliberately](docs/adr/0001-framer-motion-only.md) |
+| Animation | Framer Motion app-wide ([ADR 0001](docs/adr/0001-framer-motion-only.md)); GSAP lazy-loaded inside the demo carousel only ([ADR 0007](docs/adr/0007-gsap-in-the-demo-carousel.md)) |
 | State | Zustand (two small stores) |
 | Lint | ESLint 9 + typescript-eslint |
 
