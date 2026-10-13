@@ -27,7 +27,7 @@ export const projects: Project[] = [
     repoOwnedByOther: true,
     teamSize: 3,
     // Desktop app, so stills rather than a frame or a clip.
-    thumbnail: "/thumbs/chelsys.webp",
+    thumbnail: "/thumbs/Chelsys.webp",
     demo: {
       type: "images",
       images: [
@@ -72,12 +72,12 @@ export const projects: Project[] = [
     },
   },
   {
-    id: "gastoai",
-    title: "GastoAI",
+    id: "gastok",
+    title: "Gastok",
     description:
       "A multilingual AI expense tracker with voice and text input, built for Filipino college students. Supports English and Tagalog, with Bisaya in development.",
     tech: ["C++", "Flutter", "Dart", "CMake"],
-    // repo: "https://github.com/sheleek1n/GastoAI-Expense-Tracker-App",
+    // repo: "https://github.com/sheleek1n/Gastok-Expense-Tracker-App,
     repoOwnedByOther: true,
     teamSize: 3,
     // Mobile app: nothing to frame, so a recorded walkthrough.
@@ -103,6 +103,7 @@ export const projects: Project[] = [
     ],
     repo: "https://github.com/BurrTow/subnetct",
     // The only one that is already hosted, so it can be framed for real.
+    thumbnail: '/thumbs/subnetct.webp',
     demo: {
       type: "live",
       url: "https://burrtow.github.io/subnetct/",
