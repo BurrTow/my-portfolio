@@ -1,13 +1,27 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { DemoImage, Project, ProjectDemo } from "@/types/content";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/LinkButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { FOCUS_RING } from "@/components/ui/buttonStyles";
+import { usePerfStore } from "@/store/usePerfStore";
 
-/** Horizontal travel, in px, before a touch counts as a swipe rather than a tap. */
-const SWIPE_PX = 40;
+/** GSAP is loaded on demand, so its type comes from the dynamic import. */
+type Gsap = typeof import("gsap").gsap;
+
+/** Fraction of the frame a drag must cross to count as a swipe. */
+const SWIPE_RATIO = 0.2;
+const SLIDE_SEC = 0.45;
+const SLIDE_EASE = "power3.out";
+
+/**
+ * Diagonal reveal for the incoming frame, in the site's cut-corner language.
+ * High tier only — clip-path is a paint operation, unlike the transform and
+ * opacity the rest of the transition uses.
+ */
+const CLIP_HIDDEN = "polygon(0 0, 0 0, -30% 100%, -30% 100%)";
+const CLIP_SHOWN = "polygon(-2% -2%, 132% -2%, 102% 102%, -2% 102%)";
 
 /**
  * Shown whenever the declared media is absent. Demos are wired up before the
@@ -150,26 +164,144 @@ function VideoDemo({
  * strip has focus, and a horizontal swipe on touch.
  */
 function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
-  // Frames that 404 are dropped as they fail. Nothing is probed up front:
-  // only the visible frame is ever requested.
+  // Frames that 404 are dropped as they fail. Nothing is probed up front.
   const [broken, setBroken] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
-  const touchStartX = useRef<number | null>(null);
+  const [gsap, setGsap] = useState<Gsap | null>(null);
+  const highTier = usePerfStore((s) => s.tier === "high");
+
+  const frameRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const captionRef = useRef<HTMLParagraphElement>(null);
+  const ctxRef = useRef<ReturnType<Gsap["context"]> | null>(null);
+  /** Flipped by gsap.matchMedia; false means swap with no tween at all. */
+  const animateRef = useRef(true);
+  const prevIndexRef = useRef(0);
+  const dirRef = useRef(1);
+  const dragRef = useRef({ startX: 0, dragging: false, width: 1 });
+
+  // Loaded on first mount of the carousel, so GSAP stays out of the entry chunk.
+  useEffect(() => {
+    let alive = true;
+    void import("gsap").then((m) => alive && setGsap(() => m.gsap));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const usable = (images ?? []).filter((im) => !broken.includes(im.src));
-  if (usable.length === 0) {
+  const count = usable.length;
+  const i = Math.min(index, Math.max(count - 1, 0));
+
+  useEffect(() => {
+    if (!gsap) return;
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        animateRef.current = false;
+      });
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        animateRef.current = true;
+      });
+    }, frameRef);
+    ctxRef.current = ctx;
+    return () => {
+      ctx.revert();
+      ctxRef.current = null;
+    };
+  }, [gsap]);
+
+  // Layout effect so the first paint of the stack already has one slide up.
+  useLayoutEffect(() => {
+    if (!gsap || count === 0) return;
+    const slides = slideRefs.current.filter(Boolean) as HTMLDivElement[];
+    const to = slideRefs.current[i];
+    const from =
+      prevIndexRef.current !== i ? slideRefs.current[prevIndexRef.current] : null;
+    const dir = dirRef.current;
+    prevIndexRef.current = i;
+
+    ctxRef.current?.add(() => {
+      const settle = () => {
+        // x as well as xPercent: a slide dragged by a finger carries a pixel
+        // offset that the percentage tween does not cancel.
+        gsap.set(
+          slides.filter((el) => el !== to),
+          { autoAlpha: 0, x: 0, xPercent: 0, clearProps: "clipPath" },
+        );
+        gsap.set(to, {
+          autoAlpha: 1,
+          x: 0,
+          xPercent: 0,
+          scale: 1,
+          clearProps: "clipPath",
+        });
+      };
+
+      if (!animateRef.current) return settle();
+
+      if (from) {
+        gsap.to(from, {
+          xPercent: -100 * dir,
+          autoAlpha: 0,
+          duration: SLIDE_SEC,
+          ease: SLIDE_EASE,
+          overwrite: "auto",
+        });
+      }
+      gsap.fromTo(
+        to,
+        {
+          xPercent: from ? 100 * dir : 0,
+          autoAlpha: from ? 0 : 1,
+          scale: from ? 1.03 : 1,
+          ...(highTier && from ? { clipPath: CLIP_HIDDEN } : null),
+        },
+        {
+          xPercent: 0,
+          autoAlpha: 1,
+          scale: 1,
+          ...(highTier && from ? { clipPath: CLIP_SHOWN } : null),
+          duration: SLIDE_SEC,
+          ease: SLIDE_EASE,
+          overwrite: "auto",
+          // Rapid clicks can leave an interrupted slide part-faded; this
+          // guarantees exactly one visible frame once the last tween lands.
+          onComplete: settle,
+        },
+      );
+      if (captionRef.current && from) {
+        gsap.fromTo(
+          captionRef.current,
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: SLIDE_SEC * 0.6, overwrite: "auto" },
+        );
+      }
+    });
+  }, [gsap, i, count, highTier]);
+
+  if (count === 0) {
     return <ComingSoon hint="Screenshots of this build are being captured." />;
   }
 
-  const count = usable.length;
-  const i = Math.min(index, count - 1);
   const current = usable[i];
-  const step = (delta: number) => setIndex((n) => (Math.min(n, count - 1) + delta + count) % count);
+  const go = (delta: number) => {
+    dirRef.current = delta >= 0 ? 1 : -1;
+    setIndex((n) => (Math.min(n, count - 1) + delta + count) % count);
+  };
+  const goTo = (n: number) => {
+    dirRef.current = n > i ? 1 : -1;
+    setIndex(n);
+  };
+  // Keep the neighbours in the DOM so a switch never lands on an empty frame.
+  const near = (n: number) =>
+    n === i || n === (i + 1) % count || n === (i - 1 + count) % count;
 
   return (
     <div>
       <div
+        ref={frameRef}
         role="group"
         aria-label={`${title} screenshots`}
         aria-roledescription="carousel"
@@ -177,53 +309,110 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
         onKeyDown={(e) => {
           if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
           e.preventDefault();
-          step(e.key === "ArrowRight" ? 1 : -1);
+          go(e.key === "ArrowRight" ? 1 : -1);
         }}
-        onTouchStart={(e) => {
-          touchStartX.current = e.touches[0].clientX;
+        onPointerDown={(e) => {
+          if (!gsap || !animateRef.current || count < 2) return;
+          // No setPointerCapture: touch pointers are implicitly captured to
+          // their target already, and asking again broke the event sequence.
+          dragRef.current = {
+            startX: e.clientX,
+            dragging: true,
+            width: e.currentTarget.clientWidth || 1,
+          };
         }}
-        onTouchEnd={(e) => {
-          const from = touchStartX.current;
-          touchStartX.current = null;
-          if (from === null) return;
-          const dx = e.changedTouches[0].clientX - from;
-          if (Math.abs(dx) < SWIPE_PX) return;
-          step(dx < 0 ? 1 : -1);
+        onPointerMove={(e) => {
+          const d = dragRef.current;
+          if (!d.dragging || !gsap) return;
+          const el = slideRefs.current[i];
+          if (el) gsap.set(el, { x: e.clientX - d.startX, overwrite: "auto" });
+        }}
+        onPointerCancel={() => {
+          dragRef.current.dragging = false;
+        }}
+        onPointerUp={(e) => {
+          const d = dragRef.current;
+          if (!d.dragging || !gsap) return;
+          d.dragging = false;
+          const dx = e.clientX - d.startX;
+          const el = slideRefs.current[i];
+          if (Math.abs(dx) > d.width * SWIPE_RATIO) return go(dx < 0 ? 1 : -1);
+          // Under the threshold: spring the frame back where it was.
+          if (el)
+            gsap.to(el, { x: 0, duration: 0.25, ease: SLIDE_EASE, overwrite: "auto" });
         }}
         className={`notched relative aspect-video overflow-hidden [--fill:theme(colors.p3-black.panel)] ${FOCUS_RING}`}
       >
-        <button
-          type="button"
-          onClick={() => setZoomed(true)}
-          aria-label={`View screenshot ${i + 1} of ${count} full size`}
-          className="block h-full w-full"
-        >
-          <img
-            src={current.src}
-            alt={current.alt}
-            width={1600}
-            height={900}
-            loading={i === 0 ? "eager" : "lazy"}
-            onError={() => setBroken((b) => [...b, current.src])}
-            className="h-full w-full object-contain"
-          />
-        </button>
+        {gsap ? (
+          // Stacked in one fixed frame, so switching never reflows anything.
+          // No React-controlled opacity or transform here: GSAP owns those, and
+          // a re-render would otherwise clobber a tween mid-flight.
+          usable.map((im, n) => (
+            <div
+              key={im.src}
+              ref={(el) => {
+                slideRefs.current[n] = el;
+              }}
+              className={`absolute inset-0 ${n === i ? "" : "pointer-events-none"}`}
+              style={n === 0 ? undefined : { visibility: "hidden", opacity: 0 }}
+            >
+              <button
+                type="button"
+                onClick={() => setZoomed(true)}
+                aria-label={`View screenshot ${n + 1} of ${count} full size`}
+                tabIndex={n === i ? 0 : -1}
+                className="block h-full w-full"
+              >
+                {near(n) && (
+                  <img
+                    src={im.src}
+                    alt={im.alt}
+                    width={1600}
+                    height={900}
+                    draggable={false}
+                    loading={n === 0 ? "eager" : "lazy"}
+                    onError={() => setBroken((b) => [...b, im.src])}
+                    className="h-full w-full select-none object-contain"
+                  />
+                )}
+              </button>
+            </div>
+          ))
+        ) : (
+          // Pre-GSAP (and if the import ever fails): a plain, working carousel.
+          <button
+            type="button"
+            onClick={() => setZoomed(true)}
+            aria-label={`View screenshot ${i + 1} of ${count} full size`}
+            className="block h-full w-full"
+          >
+            <img
+              src={current.src}
+              alt={current.alt}
+              width={1600}
+              height={900}
+              loading={i === 0 ? "eager" : "lazy"}
+              onError={() => setBroken((b) => [...b, current.src])}
+              className="h-full w-full object-contain"
+            />
+          </button>
+        )}
 
         {count > 1 && (
           <>
             <button
               type="button"
-              onClick={() => step(-1)}
+              onClick={() => go(-1)}
               aria-label="Previous screenshot"
-              className={`clip-notch absolute left-2 top-1/2 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep ${FOCUS_RING}`}
+              className={`clip-notch absolute left-2 top-1/2 z-10 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep ${FOCUS_RING}`}
             >
               ←
             </button>
             <button
               type="button"
-              onClick={() => step(1)}
+              onClick={() => go(1)}
               aria-label="Next screenshot"
-              className={`clip-notch absolute right-2 top-1/2 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep ${FOCUS_RING}`}
+              className={`clip-notch absolute right-2 top-1/2 z-10 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep ${FOCUS_RING}`}
             >
               →
             </button>
@@ -231,7 +420,13 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
         )}
       </div>
 
-      <p className="mt-3 font-ui text-sm text-p3-white/70">{current.caption}</p>
+      <p
+        ref={captionRef}
+        aria-live="polite"
+        className="mt-3 font-ui text-sm text-p3-white/70"
+      >
+        {current.caption}
+      </p>
 
       {count > 1 && (
         <div className="mt-2 flex items-center gap-2">
@@ -239,10 +434,10 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
             <button
               key={im.src}
               type="button"
-              onClick={() => setIndex(n)}
+              onClick={() => goTo(n)}
               aria-label={`Go to screenshot ${n + 1}`}
               aria-current={n === i}
-              className={`h-2 w-6 -skew-x-12 ${FOCUS_RING} ${
+              className={`h-2 w-6 -skew-x-12 transition-colors ${FOCUS_RING} ${
                 n === i ? "bg-p3-blue" : "bg-p3-white/20"
               }`}
             />
@@ -261,7 +456,7 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
           subtitle={current.caption}
           footnote={`${i + 1} / ${count}`}
           onClose={() => setZoomed(false)}
-          onNavigate={count > 1 ? step : undefined}
+          onNavigate={count > 1 ? go : undefined}
         />
       )}
     </div>

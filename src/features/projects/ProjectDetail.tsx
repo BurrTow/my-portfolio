@@ -21,9 +21,22 @@ export function ProjectDetail({
       <Button variant="ghost" onClick={onBack} className="mb-6">
         ← Back
       </Button>
-      <div className="mb-6 flex aspect-[16/7] items-center justify-center border border-p3-blue/25 bg-p3-black font-ui text-sm uppercase tracking-widest text-p3-white/40">
-        Screenshot
-      </div>
+      {project.thumbnail ? (
+        // alt="" — the title is directly below and the demo carousel carries
+        // its own described screenshots, so announcing this would be noise.
+        <img
+          src={project.thumbnail}
+          alt=""
+          width={800}
+          height={450}
+          loading="lazy"
+          className="mb-6 aspect-[16/7] w-full border border-p3-blue/25 bg-p3-black object-cover"
+        />
+      ) : (
+        <div className="mb-6 flex aspect-[16/7] items-center justify-center border border-p3-blue/25 bg-p3-black font-ui text-sm uppercase tracking-widest text-p3-white/40">
+          Screenshot
+        </div>
+      )}
       <h3 className="relative inline-block font-display text-2xl font-bold text-p3-white sm:text-3xl">
         {project.title}
       </h3>
