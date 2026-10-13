@@ -86,6 +86,48 @@ The rules that follow from it:
 - **Animate backdrop-filter's opacity, never its radius.** Re-blurring at a new
   kernel size every frame is the expensive half.
 
+## Map interaction by tier
+
+The map's pointer effects come off the same ladder as everything else.
+
+| | high | medium | low | reduced motion |
+| --- | --- | --- | --- | --- |
+| Depth planes painted | yes | yes | *backdrop dropped* | yes |
+| Per-plane parallax shift | yes | yes | — | no |
+| Whole-stack tilt (2° 2D rotate) | yes | no | — | no |
+| Pin hover scale and glow | yes | yes | — | colour and outline only |
+| Zoom-to-pin on confirm | yes | yes | — | instant swap |
+
+Low tier drops the backdrop entirely through the pre-existing `mapBackdrop`
+flag, so there are no planes and no pins — the sidebar becomes the whole
+screen and remains a complete control. Reduced motion keeps the full painted
+depth and simply stops it moving.
+
+A downgrade from the frame monitor takes effect **live**: `tier` is read from
+the store, so the mode changes under an open map and the motion values are
+parked on the spot.
+
+Three rules keep this cheap, and all three are load-bearing:
+
+- **Transform and opacity only.** The planes move; the artwork never changes,
+  so each plane rasterises once. No blur, no backdrop-filter, no clip-path on
+  anything full-viewport.
+- **Motion values, not state.** The pointer offset is a `useMotionValue`
+  through a `useSpring`. `useState` here would re-render the map on every move.
+- **One update per frame, no layout reads.** The handler coalesces through
+  `requestAnimationFrame` and uses a rect cached on `pointerenter`.
+
+### The 3D stack that did not survive
+
+`perspective` + `preserve-3d` + per-plane `translateZ` measured **30fps, 59–78%
+slow frames, and self-downgraded even at 1×**. Promoting the planes with
+`will-change: transform` changed nothing. The identical five planes under a 2D
+transform measure 59.9fps / 0% slow. If someone proposes real 3D here again,
+this is the number to beat.
+
+Measured at 6× throttle, sweeping the pointer across the map for two seconds:
+**59.9 fps, 0% slow frames, no tier downgrade**, on both high and medium.
+
 ## Testing under 6× CPU throttle
 
 Required for anything touching the map, the intro, or a full-screen overlay.

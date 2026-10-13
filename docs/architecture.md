@@ -74,6 +74,81 @@ Each transition is deliberately distinct:
   the page, not a content swap in the same slot, so it reads differently from
   tab navigation.
 
+## Map interaction
+
+The map is mouse-first, and what it offers depends on the input device and the
+performance tier. Nothing here is keyboard-facing: the arrow/Enter/Escape flow
+is unchanged by any of it.
+
+### Input modality
+
+Read from `(pointer: fine)`, not from screen size.
+
+| | fine pointer (mouse) | coarse pointer (touch) |
+| --- | --- | --- |
+| Pin hover | scale 1.12, blue glow, label lifts | none — there is no hover to preview with |
+| Pin activation | **one click travels** | tap to select, tap again to confirm |
+| Parallax | yes, on high tier | never |
+
+Two details make the touch path work, and both are easy to regress:
+
+- Pins hover-select on **`pointerenter` with `pointerType === "mouse"`**, not
+  `mouseenter`. A touch tap fires the compatibility mouse events too, so
+  `mouseenter` would pre-select the pin and turn the first tap into a confirm.
+- Pins focus-select only when the button matches **`:focus-visible`**. A tap
+  focuses the button as well, with the same consequence. Keyboard focus still
+  selects, which is what Tabbing to a pin relies on.
+
+### Depth planes
+
+[`CityscapeBackdrop`](../src/features/map/CityscapeBackdrop.tsx) is five
+stacked planes of inline SVG, back to front:
+
+| Plane | Contents | Shift |
+| --- | --- | --- |
+| sky | sky gradient and the diagonal light shafts | **+6px** |
+| far | small hazy skyline, lightest and bluest | −4px |
+| mid | mid buildings, first lit windows | −9px |
+| near | largest darkest buildings, with side faces — **pins live here** | −14px |
+| fore | left/right/street silhouettes framing the frame | −16px |
+
+`shift` is how far a plane travels against the pointer. The sky takes a
+**positive** value so the shafts move *with* the cursor while the buildings
+move against it, which widens the apparent gap between them.
+
+Depth is painted, not filtered. Atmospheric perspective carries it — far
+planes lighter, bluer and lower contrast, near planes darker with sharper
+windows — plus an angled side face on the nearest buildings so they read as
+volumes, a static street-level fog gradient and a vignette. **No blur, no
+backdrop-filter, no animated filters anywhere.**
+
+Every plane is drawn at `OVERSIZE = 1.09` and the frame clips, so neither the
+shift nor the tilt can expose an edge. Pins render as children of the near
+plane, so their hit areas ride the same transform as the buildings — verified
+by hit-testing at maximum tilt.
+
+**There is no CSS 3D.** An earlier build of this used `perspective: 1200px`,
+`preserve-3d` and per-plane `translateZ` with scale compensation. It measured
+**30fps with 59% of frames over budget, even unthrottled**, and tripped the
+frame monitor into downgrading itself. The same five planes under a flat 2D
+transform hold 60fps: a continuously changing 3D transform re-rasterises the
+vector artwork every frame instead of compositing it, and `will-change` did not
+help. The tilt is now a 2D `rotate` of at most 2°.
+
+### Travelling to a destination
+
+Confirming is distinct from dismissing, and uses a different exit:
+
+- **Dismiss** (Escape, Close) — the existing scale-and-fade, unchanged.
+- **Confirm** (pin click, Enter, Travel) — the backdrop zooms to 1.6 with its
+  `transform-origin` on the chosen pin while the panel fades, ~280ms.
+
+The destination tab is set **at the start** of that zoom, while the opaque map
+still covers the screen, so the old page is never visible during the hand-off.
+`MaskWipe` is already listening on `navSeq` and plays over the top; no second
+wipe system exists. Pointer events are disabled on the dialog for the duration,
+so a double click cannot fire two navigations.
+
 ## State
 
 ### [`useUIStore`](../src/store/useUIStore.ts) — navigation
