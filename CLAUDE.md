@@ -61,3 +61,9 @@ necessary. Keep solutions simple and focused:
   else that wants imperative animation is a reason to re-read
   [`docs/adr/0007-gsap-in-the-demo-carousel.md`](docs/adr/0007-gsap-in-the-demo-carousel.md),
   not to add a second import.
+
+## Codebase navigation
+
+- For "who imports/uses X" questions, grep `src/`. The graphify graph misses dynamic imports.
+- Use `graphify-out/GRAPH_REPORT.md` only for a high-level map.
+- Before changing shared files (`useUIStore`, `App.tsx`, `main.tsx`, `MapScreen`, `MaskWipe`), grep for their callers first.
