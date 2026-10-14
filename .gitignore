@@ -4,3 +4,5 @@ node_modules/
 dist/
 *.tsbuildinfo
 
+graphify-out/
+.obsidian/
