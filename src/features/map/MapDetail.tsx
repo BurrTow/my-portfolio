@@ -4,7 +4,7 @@ import { projects } from "@/data/projects";
 import { certificates } from "@/data/certificates";
 import { repoLinks } from "@/data/links";
 import { TabIcon } from "@/components/ui/TabIcon";
-import { PortraitSilhouette } from "@/components/ui/PortraitSilhouette";
+import { MonogramEmblem } from "@/components/ui/MonogramEmblem";
 import { detailCrossFadeVariants } from "@/theme/motion";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { pinById } from "@/features/map/mapNodes";
@@ -41,9 +41,7 @@ export function MapDetail({ selected }: { selected: TabId }) {
     <div className="notched flex flex-col p-4 [--fill:theme(colors.p3-black.panel)]">
       {/* Identity — constant */}
       <div className="flex items-start gap-3">
-        <div className="notched h-20 w-16 shrink-0 overflow-hidden [--fill:theme(colors.p3-black.raised)]">
-          <PortraitSilhouette className="h-full w-full text-p3-blue" />
-        </div>
+        <MonogramEmblem size="sm" />
         <div className="min-w-0">
           <h3 className="truncate font-display text-lg font-bold text-p3-white">
             {site.shortName}
