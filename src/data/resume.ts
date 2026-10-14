@@ -1,6 +1,6 @@
 import type { ResumeMeta } from "@/types/content";
 
 export const resumeMeta: ResumeMeta = {
-  fileUrl: "/resume-placeholder.pdf",
-  updated: "2026-01",
+  fileUrl: "/resume/Roberto-Sebastian-Resume.pdf",
+  updated: "2026-10",
 };
