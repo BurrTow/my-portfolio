@@ -9,6 +9,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useUIStore, type TabId } from "@/store/useUIStore";
@@ -227,6 +228,21 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
     dialogRef.current?.focus();
   }, []);
 
+  // Scrolling the page behind the map is what makes Safari hide its address
+  // bar, which resizes this overlay mid-use. Previous values are restored
+  // rather than cleared, so an overlay that locked before us keeps its lock.
+  // shortcut: iOS can still rubber-band past this; upgrade to a fixed body
+  // with a saved scroll offset if that turns out to be visible.
+  useEffect(() => {
+    const { overflow, overscrollBehavior } = document.body.style;
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    return () => {
+      document.body.style.overflow = overflow;
+      document.body.style.overscrollBehavior = overscrollBehavior;
+    };
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -273,13 +289,15 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                 : ("enter" as const),
             onAnimationComplete: handleAnimationComplete,
           })}
-      className={`fixed inset-0 z-30 flex flex-col bg-p3-black p-4 sm:p-6 ${
+      // h-screen is the fallback; dvh tracks Safari's collapsing address bar
+      // so the column is never measured against a height the screen lost.
+      className={`fixed inset-0 z-30 flex h-screen flex-col overflow-hidden bg-p3-black p-4 pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] supports-[height:100dvh]:h-dvh sm:p-6 sm:pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] ${
         transitioning ? "pointer-events-none" : ""
       }`}
     >
-      <div className="mb-4 flex items-start justify-between gap-4">
+      <div className="mb-3 flex shrink-0 items-start justify-between gap-4 md:mb-4">
         <div>
-          <h2 className="-skew-x-6 font-display text-2xl font-bold text-p3-white">
+          <h2 className="-skew-x-6 font-display text-xl font-bold text-p3-white md:text-2xl">
             Select Map
           </h2>
           <p className="mt-1 font-ui text-xs uppercase tracking-wide text-p3-white/50">
@@ -296,32 +314,58 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-4 lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 md:gap-4 lg:flex-row">
         {/* Sidebar — primary control, always present */}
         {/* Without a backdrop the list is the whole screen, not a column with
-            dead space beside it. */}
+            dead space beside it. Below md it sits under the map, because the
+            map is what needs the height. */}
         <div
           className={`flex flex-col gap-3 ${
-            showBackdrop ? "shrink-0 lg:w-72" : "w-full"
+            showBackdrop ? "order-2 shrink-0 md:order-none lg:w-72" : "w-full"
           }`}
         >
-          <ul className="flex flex-col gap-2">
+          {/* With a backdrop the list is a swipeable strip below md, so five
+              entries cost one row instead of five. Without one it is the only
+              control on the screen and stays a full list. */}
+          <ul
+            className={`flex gap-2 ${
+              showBackdrop
+                ? "overflow-x-auto md:flex-col md:overflow-x-visible"
+                : "flex-col"
+            }`}
+          >
             {MAP_PINS.map((pin) => {
               const isSel = pin.id === selected;
               return (
-                <li key={pin.id}>
+                <li
+                  key={pin.id}
+                  className={showBackdrop ? "shrink-0 md:shrink" : ""}
+                >
                   <button
                     onClick={() => choose(pin.id)}
-                    onMouseEnter={() => setSelected(pin.id)}
-                    onFocus={() => setSelected(pin.id)}
+                    // Guarded exactly as the pins are: a touch tap fires the
+                    // compatibility mouse events and focuses the button, and
+                    // either one pre-selecting would make the first tap
+                    // confirm and navigate.
+                    onPointerEnter={(e) => {
+                      if (e.pointerType === "mouse") setSelected(pin.id);
+                    }}
+                    onFocus={(e) => {
+                      if (e.currentTarget.matches(":focus-visible")) {
+                        setSelected(pin.id);
+                      }
+                    }}
                     aria-current={pin.id === activeTab ? "page" : undefined}
-                    className={`notched flex w-full items-center gap-3 px-4 py-3 text-left font-ui text-sm font-semibold uppercase tracking-wide transition-colors duration-150 ${FOCUS_RING} ${
+                    className={`notched flex w-full items-center gap-2 px-3 py-3 text-left font-ui text-xs font-semibold uppercase tracking-wide transition-colors duration-150 md:gap-3 md:px-4 md:text-sm ${FOCUS_RING} ${
                       isSel
                         ? "text-p3-white [--edge:theme(colors.p3-red.DEFAULT)] [--fill:theme(colors.p3-blue.deep)]"
                         : "text-p3-white/70 [--fill:theme(colors.p3-black.panel)]"
                     }`}
                   >
-                    <TabIcon id={pin.id} className="h-5 w-5 shrink-0" />
+                    <TabIcon
+                      id={pin.id}
+                      className="h-4 w-4 shrink-0 md:h-5 md:w-5"
+                    />
                     {pin.label}
                   </button>
                 </li>
@@ -340,15 +384,25 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
             }}
             onPointerMove={handlePointerMove}
             onPointerLeave={restParallax}
-            className="notched relative min-h-[18rem] flex-1 overflow-hidden [--fill:theme(colors.p3-black.panel)]"
+            // Below md the 18rem floor is what overflowed the column and
+            // pushed the HUD off-screen, so the map takes the leftover height
+            // instead, with a small floor only to stop it collapsing.
+            className="notched relative min-h-[8rem] flex-1 overflow-hidden md:min-h-[18rem] [--fill:theme(colors.p3-black.panel)]"
           >
             <motion.div
-              className="absolute inset-0"
-              style={{
-                transformOrigin: travelId
-                  ? `${pinById(travelId).x}% ${pinById(travelId).y}%`
-                  : "50% 50%",
-              }}
+              // The zoom has to start from where the pin actually is, which
+              // differs by breakpoint, so the origin travels as a variable too.
+              className="absolute inset-0 origin-[var(--zoom-from)] md:origin-[var(--zoom-from-md)]"
+              style={
+                {
+                  "--zoom-from": travelId
+                    ? `${pinById(travelId).mobileX}% ${pinById(travelId).mobileY}%`
+                    : "50% 50%",
+                  "--zoom-from-md": travelId
+                    ? `${pinById(travelId).x}% ${pinById(travelId).y}%`
+                    : "50% 50%",
+                } as CSSProperties
+              }
               animate={
                 traveling
                   ? { scale: TRAVEL_SCALE, opacity: 0 }
@@ -380,8 +434,19 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                         }
                       }}
                       aria-label={pin.label}
-                      style={{ left: `${pin.x}%`, top: `${pin.y}%` }}
-                      className={`group pointer-events-auto absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 p-1 ${
+                      // Both coordinate sets go in as custom properties and
+                      // the breakpoint picks one, so swapping them needs no
+                      // width state and cannot disagree with the layout's own
+                      // md: rules.
+                      style={
+                        {
+                          "--pin-x": `${pin.mobileX}%`,
+                          "--pin-y": `${pin.mobileY}%`,
+                          "--pin-x-md": `${pin.x}%`,
+                          "--pin-y-md": `${pin.y}%`,
+                        } as CSSProperties
+                      }
+                      className={`group pointer-events-auto absolute left-[var(--pin-x)] top-[var(--pin-y)] z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 p-1 md:left-[var(--pin-x-md)] md:top-[var(--pin-y-md)] ${
                         hoverFx ? "cursor-pointer" : ""
                       } ${FOCUS_RING}`}
                     >
@@ -397,7 +462,9 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                         {pin.label}
                       </span>
                       <span
-                        className={`flex h-8 w-8 rotate-45 items-center justify-center border-2 transition-[colors,transform,box-shadow] duration-150 ${
+                        // 44px below md: the minimum comfortable tap target,
+                        // and the diamond is the part people aim at.
+                        className={`flex h-11 w-11 rotate-45 items-center justify-center border-2 transition-[colors,transform,box-shadow] duration-150 md:h-8 md:w-8 ${
                           hoverFx
                             ? "group-hover:scale-[1.12] group-hover:shadow-[0_0_14px_3px_rgba(43,111,255,0.5)] group-active:scale-95"
                             : ""
@@ -409,7 +476,7 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                       >
                         <TabIcon
                           id={pin.id}
-                          className="h-4 w-4 -rotate-45 text-p3-white"
+                          className="h-5 w-5 -rotate-45 text-p3-white md:h-4 md:w-4"
                         />
                       </span>
                     </button>
@@ -422,22 +489,32 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
       </div>
 
       {/* Bottom HUD */}
-      <div className="mt-4 flex items-center justify-between gap-4 border-t border-p3-blue/25 pt-3">
-        <div className="flex flex-wrap items-center gap-4">
-          <KeyHint glyph="↑↓" label="Select" />
-          <KeyHint glyph="Enter" label="Travel" />
-          <KeyHint glyph="Esc" label="Close" />
-        </div>
-        <div className="flex gap-2">
+      <div className="mt-3 flex shrink-0 items-center justify-between gap-4 border-t border-p3-blue/25 pt-3 md:mt-4">
+        {/* Nothing to press these keys with on a touch device. */}
+        {finePointer && (
+          <div className="flex flex-wrap items-center gap-4">
+            <KeyHint glyph="↑↓" label="Select" />
+            <KeyHint glyph="Enter" label="Travel" />
+            <KeyHint glyph="Esc" label="Close" />
+          </div>
+        )}
+        {/* On touch the hints are gone, so the two buttons split the row
+            instead: 44px-tall targets that are always on screen because the
+            HUD never shrinks. */}
+        <div className={`flex gap-2 ${finePointer ? "" : "flex-1"}`}>
           <button
             onClick={() => requestClose()}
-            className={`notched px-4 py-2 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white [--fill:theme(colors.p3-black.panel)] ${FOCUS_RING}`}
+            className={`notched px-4 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white [--fill:theme(colors.p3-black.panel)] ${
+              finePointer ? "py-2" : "flex-1 py-3"
+            } ${FOCUS_RING}`}
           >
             Close
           </button>
           <button
             onClick={() => confirm(selected)}
-            className={`clip-notch bg-p3-blue-deep px-5 py-2 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white hover:bg-p3-blue ${FOCUS_RING}`}
+            className={`clip-notch bg-p3-blue-deep px-5 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white hover:bg-p3-blue ${
+              finePointer ? "py-2" : "flex-1 py-3"
+            } ${FOCUS_RING}`}
           >
             Travel
           </button>

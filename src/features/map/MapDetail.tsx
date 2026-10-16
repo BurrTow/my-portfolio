@@ -38,9 +38,11 @@ export function MapDetail({ selected }: { selected: TabId }) {
   const count = COUNTS[selected];
 
   return (
-    <div className="notched flex flex-col p-4 [--fill:theme(colors.p3-black.panel)]">
-      {/* Identity — constant */}
-      <div className="flex items-start gap-3">
+    <div className="notched flex flex-col p-3 md:p-4 [--fill:theme(colors.p3-black.panel)]">
+      {/* Identity — constant. Dropped below md: the same name and location are
+          one tap away on the About card, and on a phone this card's job is to
+          describe the highlighted destination without eating the map's height. */}
+      <div className="hidden items-start gap-3 md:flex">
         <MonogramEmblem size="sm" />
         <div className="min-w-0">
           <h3 className="truncate font-display text-lg font-bold text-p3-white">
@@ -53,13 +55,13 @@ export function MapDetail({ selected }: { selected: TabId }) {
       </div>
 
       {/* Divider, in the site's diagonal language. */}
-      <div aria-hidden className="my-3 flex items-center gap-2">
+      <div aria-hidden className="my-3 hidden items-center gap-2 md:flex">
         <span className="h-0.5 w-10 -skew-x-12 bg-p3-red" />
         <span className="h-px flex-1 -skew-x-12 bg-p3-blue/30" />
       </div>
 
       {/* Destination — cross-fades with the highlight */}
-      <div className="relative grid min-h-[6.5rem]">
+      <div className="relative grid min-h-[4.5rem] md:min-h-[6.5rem]">
         <AnimatePresence initial={false}>
           <motion.div
             key={selected}
