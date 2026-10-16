@@ -23,7 +23,7 @@ export const projects: Project[] = [
       "Vite",
       "ESLint",
     ],
-    repo: "https://github.com/sheleek1n/chelsys-burger-system",
+    repo: "https://github.com/sheleek1n/Sia2-Chelsys-burger",
     repoOwnedByOther: true,
     teamSize: 3,
     // Desktop app, so stills rather than a frame or a clip.
