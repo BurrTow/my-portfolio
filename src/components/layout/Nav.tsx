@@ -10,7 +10,7 @@ import {
 import { useArrowKeyTabNav } from "@/hooks/useArrowKeyTabNav";
 import { TabIcon } from "@/components/ui/TabIcon";
 import { GlitchLabel } from "@/components/ui/GlitchLabel";
-import { FOCUS_RING } from "@/components/ui/buttonStyles";
+import { FOCUS_RING, TAB_LABEL } from "@/components/ui/buttonStyles";
 import {
   bladeItemVariants,
   bladeItemVariantsMobile,
@@ -38,7 +38,7 @@ export function Nav() {
         aria-orientation="vertical"
         aria-label="Primary"
         onKeyDown={handleKeyDown}
-        className="fixed left-0 top-0 z-20 hidden h-full w-56 flex-col justify-center gap-3 border-r border-p3-blue/20 bg-p3-black px-4 md:flex"
+        className="fixed left-0 top-0 z-20 hidden h-full w-56 flex-col justify-center gap-[var(--tab-gap)] rail border-r border-p3-blue/20 bg-p3-black px-4 md:flex"
       >
         {TABS.map((tab) => {
           const isActive = tab === activeTab;
@@ -56,21 +56,13 @@ export function Nav() {
               onMouseLeave={() => setHovered(null)}
               onFocus={() => setHovered(tab)}
               onBlur={() => setHovered(null)}
-              className={`group relative flex h-12 items-center gap-3 pl-5 pr-3 ${FOCUS_RING}`}
+              // Shape, fill, hover shift and focus ring all come from
+              // .slant-tab in index.css; only the text colours live here.
+              className={`slant-tab group relative ${isActive ? "on-accent" : ""}`}
             >
-              <motion.span
-                layout
-                layoutDependency={activeTab}
-                transition={selectionHighlightTransition}
-                className={`clip-slice absolute inset-0 transition-colors duration-150 ${
-                  isActive
-                    ? "bg-p3-blue-deep"
-                    : "bg-transparent group-hover:bg-p3-black-raised"
-                }`}
-              />
               <TabIcon
                 id={tab}
-                className={`relative z-10 h-5 w-5 shrink-0 transition-colors duration-150 ${
+                className={`h-4 w-4 shrink-0 transition-colors duration-150 ${
                   isActive
                     ? "text-p3-white"
                     : "text-p3-blue/70 group-hover:text-p3-white"
@@ -79,14 +71,14 @@ export function Nav() {
               <GlitchLabel
                 text={TAB_LABELS[tab]}
                 active={hovered === tab}
-                className={`relative z-10 -skew-x-6 font-ui text-lg font-semibold uppercase tracking-wide transition-colors duration-150 ${
+                className={`${TAB_LABEL} transition-colors duration-150 ${
                   isActive
                     ? "text-p3-white"
                     : "text-p3-white/65 group-hover:text-p3-white"
                 }`}
               />
               {isActive && (
-                <span className="absolute left-0 top-0 z-10 h-full w-1.5 bg-p3-red" />
+                <span className="absolute left-0 top-0 h-full w-1 bg-p3-red" />
               )}
             </motion.button>
           );
@@ -102,7 +94,7 @@ export function Nav() {
         aria-orientation="horizontal"
         aria-label="Primary"
         onKeyDown={handleKeyDown}
-        className="fixed bottom-0 left-0 right-0 z-20 flex h-16 items-stretch justify-around border-t border-p3-blue/30 bg-p3-black px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-20 flex h-16 items-stretch justify-around rail border-t border-p3-blue/30 bg-p3-black px-1 pb-[env(safe-area-inset-bottom,0px)] md:hidden"
       >
         {TABS.map((tab) => {
           const isActive = tab === activeTab;

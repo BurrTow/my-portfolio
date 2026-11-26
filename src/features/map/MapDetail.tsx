@@ -90,7 +90,7 @@ export function MapDetail({ selected }: { selected: TabId }) {
                     <span
                       key={i}
                       className={`h-2.5 w-4 -skew-x-12 ${
-                        i < count.value ? "bg-p3-blue" : "bg-p3-white/12"
+                        i < count.value ? "bg-p3-blue" : "bg-p3-white-dim/20"
                       }`}
                     />
                   ))}

@@ -14,7 +14,7 @@ import {
 } from "react";
 import { useUIStore, type TabId } from "@/store/useUIStore";
 import { usePerfStore } from "@/store/usePerfStore";
-import { FOCUS_RING } from "@/components/ui/buttonStyles";
+import { FOCUS_RING, TAB_LABEL } from "@/components/ui/buttonStyles";
 import { MAP_PINS, pinById } from "@/features/map/mapNodes";
 import {
   CityscapeBackdrop,
@@ -29,11 +29,11 @@ import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 const TRAVEL_SCALE = 1.6;
 const TRAVEL_SEC = 0.28;
 
-/** Rounded key cap and its action, replacing the plain-text prompt line. */
+/** Square key cap and its action, replacing the plain-text prompt line. */
 function KeyHint({ glyph, label }: { glyph: string; label: string }) {
   return (
     <span className="flex items-center gap-2">
-      <span className="inline-flex h-6 min-w-[1.9rem] items-center justify-center rounded-full border border-p3-blue/50 bg-p3-black-raised px-2 font-ui text-[0.7rem] font-bold leading-none text-p3-white">
+      <span className="inline-flex h-6 min-w-[2rem] items-center justify-center border border-p3-blue/50 bg-p3-black-raised px-2 font-ui text-[0.7rem] font-bold leading-none text-p3-white">
         {glyph}
       </span>
       <span className="font-ui text-xs uppercase tracking-wide text-p3-white/55">
@@ -327,8 +327,11 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
           {/* With a backdrop the list is a swipeable strip below md, so five
               entries cost one row instead of five. Without one it is the only
               control on the screen and stays a full list. */}
+          {/* rail: the same icon/divider tokens as the nav rail, so the two
+              lists match. -m-1 p-1 leaves room for the focus ring, which the
+              swipe strip's overflow would otherwise clip. */}
           <ul
-            className={`flex gap-2 ${
+            className={`rail -m-1 flex gap-[var(--tab-gap)] p-1 ${
               showBackdrop
                 ? "overflow-x-auto md:flex-col md:overflow-x-visible"
                 : "flex-col"
@@ -356,17 +359,32 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                       }
                     }}
                     aria-current={pin.id === activeTab ? "page" : undefined}
-                    className={`notched flex w-full items-center gap-2 px-3 py-3 text-left font-ui text-xs font-semibold uppercase tracking-wide transition-colors duration-150 md:gap-3 md:px-4 md:text-sm ${FOCUS_RING} ${
-                      isSel
-                        ? "text-p3-white [--edge:theme(colors.p3-red.DEFAULT)] [--fill:theme(colors.p3-blue.deep)]"
-                        : "text-p3-white/70 [--fill:theme(colors.p3-black.panel)]"
+                    // The nav rail's slanted tab: shape, fill, hover shift and
+                    // focus ring from .slant-tab; colours as in Nav.tsx.
+                    className={`slant-tab group relative w-full text-left ${
+                      isSel ? "is-active on-accent" : ""
                     }`}
                   >
                     <TabIcon
                       id={pin.id}
-                      className="h-4 w-4 shrink-0 md:h-5 md:w-5"
+                      className={`h-4 w-4 shrink-0 transition-colors duration-150 ${
+                        isSel
+                          ? "text-p3-white"
+                          : "text-p3-blue/70 group-hover:text-p3-white"
+                      }`}
                     />
-                    {pin.label}
+                    <span
+                      className={`${TAB_LABEL} whitespace-nowrap transition-colors duration-150 ${
+                        isSel
+                          ? "text-p3-white"
+                          : "text-p3-white/65 group-hover:text-p3-white"
+                      }`}
+                    >
+                      {pin.label}
+                    </span>
+                    {isSel && (
+                      <span className="absolute left-0 top-0 h-full w-1 bg-p3-red" />
+                    )}
                   </button>
                 </li>
               );
@@ -387,7 +405,9 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
             // Below md the 18rem floor is what overflowed the column and
             // pushed the HUD off-screen, so the map takes the leftover height
             // instead, with a small floor only to stop it collapsing.
-            className="notched relative min-h-[8rem] flex-1 overflow-hidden md:min-h-[18rem] [--fill:theme(colors.p3-black.panel)]"
+            // on-blue: in light this is the blue side of the split, so pin
+            // labels, rings and highlights turn cyan. A no-op in dark.
+            className="on-blue notched relative min-h-[8rem] flex-1 overflow-hidden md:min-h-[18rem] [--fill:theme(colors.p3-black.panel)]"
           >
             <motion.div
               // The zoom has to start from where the pin actually is, which
@@ -451,7 +471,7 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                       } ${FOCUS_RING}`}
                     >
                       <span
-                        className={`clip-notch whitespace-nowrap px-3 py-1 font-ui text-xs font-semibold uppercase tracking-wide transition-[colors,transform] duration-150 ${
+                        className={`slant-tag whitespace-nowrap py-1 pl-3 pr-4 font-ui text-xs font-semibold uppercase tracking-wide transition-[colors,transform] duration-150 ${
                           hoverFx ? "group-hover:-translate-y-0.5" : ""
                         } ${
                           isSel
@@ -466,7 +486,7 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                         // and the diamond is the part people aim at.
                         className={`flex h-11 w-11 rotate-45 items-center justify-center border-2 transition-[colors,transform,box-shadow] duration-150 md:h-8 md:w-8 ${
                           hoverFx
-                            ? "group-hover:scale-[1.12] group-hover:shadow-[0_0_14px_3px_rgba(43,111,255,0.5)] group-active:scale-95"
+                            ? "group-hover:scale-[1.12] group-hover:shadow-[0_0_14px_3px_rgb(var(--accent)/0.5)] group-active:scale-95"
                             : ""
                         } ${
                           isSel
@@ -484,6 +504,10 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
                 })}
               </CityscapeBackdrop>
             </motion.div>
+            {/* Light only: the split's hard diagonal on the map's left edge.
+                Pins sit clear of it (the cut reaches ~14% of the width at the
+                very bottom), and it never takes a pointer event. */}
+            <div aria-hidden className="split-wedge" />
           </div>
         )}
       </div>
@@ -501,20 +525,21 @@ export function MapScreen({ onClose }: { onClose: () => void }) {
         {/* On touch the hints are gone, so the two buttons split the row
             instead: 44px-tall targets that are always on screen because the
             HUD never shrinks. */}
+        {/* Action buttons (.action): 40px, 48px on touch, 8px notch. */}
         <div className={`flex gap-2 ${finePointer ? "" : "flex-1"}`}>
           <button
             onClick={() => requestClose()}
-            className={`notched px-4 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white [--fill:theme(colors.p3-black.panel)] ${
-              finePointer ? "py-2" : "flex-1 py-3"
-            } ${FOCUS_RING}`}
+            className={`action action-secondary relative font-ui text-sm font-semibold uppercase tracking-wide ${
+              finePointer ? "" : "flex-1"
+            }`}
           >
             Close
           </button>
           <button
             onClick={() => confirm(selected)}
-            className={`clip-notch bg-p3-blue-deep px-5 font-ui text-sm font-semibold uppercase tracking-wide text-p3-white hover:bg-p3-blue ${
-              finePointer ? "py-2" : "flex-1 py-3"
-            } ${FOCUS_RING}`}
+            className={`action action-primary relative font-ui text-sm font-semibold uppercase tracking-wide ${
+              finePointer ? "" : "flex-1"
+            }`}
           >
             Travel
           </button>

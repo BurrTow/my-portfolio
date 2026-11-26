@@ -3,12 +3,394 @@
 @tailwind utilities;
 
 @layer base {
+  /* The single source of colour. Role tokens as RGB channels, so Tailwind's
+     /opacity modifiers keep working (tailwind.config.js reads every colour
+     from here). Dark doubles as the no-attribute default; index.html sets
+     data-theme before first paint.
+
+     Contrast, dark: ink 17.6:1 on page, /70 8.9:1, /50 5.0:1 (the floor for
+     body text). Accent as small text is 4.4:1 here, so in dark it is kept to
+     labels and blocks. */
+  :root,
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: 14 14 16;
+    --surface: 22 22 26;
+    --raised: 29 29 34;
+    --border: 43 111 255;
+    --ink: 245 245 240;
+    --ink-fade: 1;
+    --ink-muted: 176 176 173;
+    --accent: 43 111 255;
+    /* White on this is 4.64:1, where the brighter accent is 3.98:1. */
+    --accent-strong: 30 95 255;
+    --accent-tint: 15 42 107;
+    /* Same role in both themes: text on a blue or red fill stays light and
+       the red stays red. */
+    --on-accent: 245 245 240;
+    --danger: 217 30 54;
+    --focus: 217 30 54;
+    --highlight: 43 111 255;
+
+    /* Navigation rail (see .rail): master's page and accent. */
+    --rail: 14 14 16;
+    --rail-edge: 43 111 255;
+    --rail-icon: 43 111 255;
+
+    /* The blue side of the split (BackgroundFX panel, map area). In dark every
+       value equals what is already there, so the split paints nothing new and
+       .on-blue changes nothing. */
+    --field-from: 14 14 16;
+    --field-to: 14 14 16;
+    --blue-page: 14 14 16;
+    --blue-ink: 245 245 240;
+    --blue-ink-fade: 1;
+    --blue-accent: 43 111 255;
+    --blue-focus: 217 30 54;
+    --split-on: 0;
+    --split-wedge: 14 14 16;
+    --stripe: 43 111 255;
+
+    /* Map skyline (CityscapeBackdrop). Near planes darker, far lighter. */
+    --cb-sky-top: #0d255e;
+    --cb-sky-mid: #0e1020;
+    --cb-far: #2b4c8c;
+    --cb-mid-top: #16264e;
+    --cb-mid-bottom: #0b1022;
+    --cb-near-top: #0c1730;
+    --cb-near-bottom: #05070e;
+    --cb-side: #03050a;
+    --cb-fore: #05070c;
+    --cb-fog: #16264f;
+  }
+
+  /* Persona 3 Reload menu, white-dominant: white rail and cards, a pale
+     ice-blue page, and blue as a bounded accent — an angled panel on the
+     right (BackgroundFX) and the map area — with cyan only on that blue.
+     Palette: #1269cc, #51eefc, #6d9ac7, #ffffff, #303030; the rest derived.
+
+     Contrast, light (by calculation):
+       ink #303030: 13.2:1 on white, 12.2:1 on page; /40 (alpha 0.7) 5.0:1
+       ink-muted #3f5f82 on white 6.6:1
+       accent #1269cc as text: 5.4:1 on white, 5.0:1 on page
+       white on accent-strong #0e5ab4 6.7:1, on accent 5.4:1
+       rail icons #1269cc on white 5.4:1; frames #1269cc on page 5.0:1
+       cyan on blue-page #08347a 8.4:1 (never on white)
+       focus red on page 4.7:1; focus cyan on blue 3.8:1 to 8.4:1 */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    /* #ffffff with 8% #6d9ac7. */
+    --page: 243 247 250;
+    --surface: 255 255 255;
+    /* #ffffff with 15% #6d9ac7. */
+    --raised: 233 240 247;
+    --border: 18 105 204;
+    --ink: 48 48 48;
+    /* Pulls translucent ink toward opaque: /40 lands at 0.7 alpha. */
+    --ink-fade: 0.5;
+    --ink-muted: 63 95 130;
+    --accent: 18 105 204;
+    --accent-strong: 14 90 180;
+    --accent-tint: 109 154 199;
+    --on-accent: 255 255 255;
+    --danger: 217 30 54;
+    --focus: 217 30 54;
+    --highlight: 81 238 252;
+
+    /* Opaque white rail. Divider #6d9ac7 at the class's /20 (/30 on the
+       mobile bar). Icons are drawn at /70, so the base is a deep blue derived
+       from #1269cc: 70% of it on white is 5.1:1. */
+    --rail: 255 255 255;
+    --rail-edge: 109 154 199;
+    --rail-icon: 8 51 107;
+
+    --field-from: 18 105 204;
+    --field-to: 8 52 122;
+    --blue-page: 8 52 122;
+    --blue-ink: 81 238 252;
+    --blue-ink-fade: 0;
+    --blue-accent: 81 238 252;
+    --blue-focus: 81 238 252;
+    --split-on: 1;
+    --split-wedge: 243 247 250;
+    --stripe: 109 154 199;
+
+    /* Night-blue skyline for the map's blue side: #1269cc sky deepening to
+       #08347a, towers darker toward the front, cyan windows via --accent. */
+    --cb-sky-top: #1269cc;
+    --cb-sky-mid: #0f5bb5;
+    --cb-far: #6d9ac7;
+    --cb-mid-top: #0e5ab4;
+    --cb-mid-bottom: #0b4a96;
+    --cb-near-top: #0a3f80;
+    --cb-near-bottom: #072d5e;
+    --cb-side: #05234a;
+    --cb-fore: #041b3a;
+    --cb-fog: #0b4a96;
+  }
+
+  /* Split geometry, shared by the page panel and the map. Not colours, so one
+     set serves both themes; the dark theme never shows the split. */
+  :root {
+    --split-angle: 12deg;
+    --blue-width: 28vw;
+  }
+
   body {
-    @apply bg-p3-black font-ui text-p3-white antialiased;
+    @apply bg-page font-ui text-ink antialiased;
   }
 
   ::selection {
-    @apply bg-p3-blue text-p3-white;
+    background-color: rgb(var(--accent-strong));
+    color: rgb(var(--on-accent));
+  }
+}
+
+/* Nav rail and theme toggle keep master's p3-* classes; these re-point the
+   variables those classes read, so dark resolves to exactly master's colours
+   and light gets its own. Plain CSS, so it is always emitted.
+   Rail: bg-p3-black reads --page (the rail surface), border-p3-blue/20 reads
+   the nav's --accent (the divider); the items inside read --accent again
+   (the inactive icons). */
+.rail {
+  --page: var(--rail);
+  --accent: var(--rail-edge);
+}
+
+.rail > * {
+  --accent: var(--rail-icon);
+}
+
+/* Slanted tab: one shape for every state, only the fill changes. The fill is
+   a ::before so the clip never cuts the focus ring on the element itself.
+   The cut is in px, so the angle is the same at any width, and it keeps the
+   site's slant direction (x grows as y grows). */
+:root {
+  --tab-h: 40px;
+  --tab-cut: 16px;
+  --tab-gap: 8px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --tab-h: 48px;
+  }
+}
+
+/* No `position` here: this rule comes after Tailwind's utilities, so setting
+   it would override `fixed` on the theme toggle (it did, and pushed the
+   toggle off-screen). Callers give it `relative` or `fixed`; both anchor the
+   ::before. */
+.slant-tab {
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--tab-h);
+  padding: 0 24px 0 16px;
+}
+
+.slant-tab::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(0 0, calc(100% - var(--tab-cut)) 0, 100% 100%, 0 100%);
+  background-color: var(--tab-fill, transparent);
+  transition: background-color 150ms;
+}
+
+.slant-tab:focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 2px;
+}
+
+/* Active: aria-selected on nav tabs, .is-active where the selection is not a
+   tab (the map destination list). */
+.slant-tab:is([aria-selected="true"], .is-active) {
+  --tab-fill: rgb(var(--accent-strong));
+}
+
+/* Hover only where hover exists. Solid tint from tokens, never an /opacity
+   over the animated background. */
+@media (hover: hover) and (pointer: fine) {
+  .slant-tab:not([aria-selected="true"], .is-active):hover {
+    --tab-fill: rgb(var(--raised));
+  }
+}
+
+/* `translate`, not `transform`, so it composes with the label's skew. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .slant-tab > * {
+    transition:
+      translate 150ms ease-out,
+      color 150ms;
+  }
+
+  .slant-tab:not([aria-selected="true"], .is-active):hover > * {
+    translate: 4px 0;
+  }
+}
+
+/* Slanted tag: the tab's cut at tag size, for labels that are not controls
+   (map pin labels). Same direction as the tab. */
+.slant-tag {
+  clip-path: polygon(0 0, calc(100% - var(--tag-cut)) 0, 100% 100%, 0 100%);
+}
+
+:root {
+  --tag-cut: 8px;
+}
+
+/* Action button: notched top-right corner. Like the tab, the shape lives on
+   pseudo-elements behind the content (::before the edge, ::after the fill
+   1px inside it), so the focus ring on the element is never clipped. No
+   `position` for the same reason as .slant-tab: callers set it. */
+:root {
+  --action-h: 40px;
+  --action-h-sm: 32px;
+  --action-notch: 8px;
+  /* Resolved here, at the root, so a scope that re-points --accent (.on-blue
+     on the theme toggle) cannot turn the hover fill cyan under white ink. */
+  --action-hover: var(--accent);
+}
+
+@media (pointer: coarse) {
+  :root {
+    --action-h: 48px;
+    /* Header buttons keep a 44px target on touch. */
+    --action-h-sm: 44px;
+  }
+}
+
+.action {
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: var(--action-h);
+  padding: 0 16px;
+  color: rgb(var(--action-ink));
+}
+
+.action::before,
+.action::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--action-notch)) 0,
+    100% var(--action-notch),
+    100% 100%,
+    0 100%
+  );
+  transition: background-color 150ms;
+}
+
+.action::before {
+  inset: 0;
+  background-color: rgb(var(--action-edge));
+}
+
+.action::after {
+  inset: 1px;
+  background-color: rgb(var(--action-fill));
+}
+
+.action:focus-visible {
+  outline: 2px solid rgb(var(--focus));
+  outline-offset: 2px;
+}
+
+.action-sm {
+  height: var(--action-h-sm);
+}
+
+/* Primary: filled blue (TRAVEL, MAP, the theme toggle). Secondary: outlined
+   (CLOSE). */
+.action-primary {
+  --action-edge: var(--accent-strong);
+  --action-fill: var(--accent-strong);
+  --action-ink: var(--on-accent);
+}
+
+.action-secondary {
+  --action-edge: var(--border);
+  --action-fill: var(--surface);
+  --action-ink: var(--ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .action-primary:hover {
+    --action-edge: var(--action-hover);
+    --action-fill: var(--action-hover);
+  }
+
+  .action-secondary:hover {
+    --action-fill: var(--raised);
+  }
+}
+
+/* Anything sitting on the blue side of the split: the page colour becomes the
+   deep blue, and ink, accent and focus become cyan. A no-op in dark. Fills
+   that carry their own text (.bg-p3-red etc. below) still win on themselves. */
+.on-blue {
+  --page: var(--blue-page);
+  --ink: var(--blue-ink);
+  --ink-fade: var(--blue-ink-fade);
+  --accent: var(--blue-accent);
+  --focus: var(--blue-focus);
+}
+
+/* The blue panel's hard diagonal, the same "/" as every cut on the site:
+   x grows as y grows. --split-h is the element's height, so the edge lands on
+   exactly --split-angle whatever the element's size. */
+.split-blue {
+  background-image: linear-gradient(
+    to bottom right,
+    rgb(var(--field-from)),
+    rgb(var(--field-to))
+  );
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% 100%,
+    calc(var(--split-h) * tan(var(--split-angle))) 100%
+  );
+}
+
+/* The same edge for a container of unknown height (the map area): a page-
+   coloured block hung off the left edge and skewed, so its right side runs
+   from the top-left corner down at --split-angle. Invisible in dark. */
+.split-wedge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  width: 100%;
+  transform-origin: top right;
+  transform: skewX(var(--split-angle));
+  background-color: rgb(var(--split-wedge));
+  opacity: var(--split-on);
+  pointer-events: none;
+}
+
+/* Ink is dark in light mode, so anything on an accent fill re-points it at
+   on-accent. Elements that carry the fill class get it automatically (this is
+   what keeps the Map button in App.tsx legible); `on-accent` covers fills set
+   some other way, and works with hover:/group-hover:. */
+.bg-p3-blue-deep,
+.bg-accent-strong,
+.bg-p3-red,
+.bg-danger {
+  --ink: var(--on-accent);
+}
+
+@layer utilities {
+  .on-accent {
+    --ink: var(--on-accent);
   }
 }
 

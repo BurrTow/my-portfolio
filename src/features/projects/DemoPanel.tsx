@@ -404,7 +404,7 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
               type="button"
               onClick={() => go(-1)}
               aria-label="Previous screenshot"
-              className={`clip-notch absolute left-2 top-1/2 z-10 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep ${FOCUS_RING}`}
+              className={`clip-notch absolute left-2 top-1/2 z-10 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep hover:on-accent ${FOCUS_RING}`}
             >
               ←
             </button>
@@ -412,7 +412,7 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
               type="button"
               onClick={() => go(1)}
               aria-label="Next screenshot"
-              className={`clip-notch absolute right-2 top-1/2 z-10 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep ${FOCUS_RING}`}
+              className={`clip-notch absolute right-2 top-1/2 z-10 -translate-y-1/2 bg-p3-black/85 px-3 py-2 font-ui text-sm font-semibold text-p3-white hover:bg-p3-blue-deep hover:on-accent ${FOCUS_RING}`}
             >
               →
             </button>
@@ -438,7 +438,7 @@ function ImageDemo({ images, title }: { images?: DemoImage[]; title: string }) {
               aria-label={`Go to screenshot ${n + 1}`}
               aria-current={n === i}
               className={`h-2 w-6 -skew-x-12 transition-colors ${FOCUS_RING} ${
-                n === i ? "bg-p3-blue" : "bg-p3-white/20"
+                n === i ? "bg-p3-blue" : "bg-p3-white-dim/30"
               }`}
             />
           ))}

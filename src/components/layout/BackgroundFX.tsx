@@ -27,6 +27,14 @@ export function BackgroundFX() {
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-p3-black"
     >
+      {/* The blue side of the split, static. In dark its gradient stops are the
+          page colour, so it paints nothing new.
+          xl and up: a panel on the right, --blue-width wide at the top. Below
+          xl the content column reaches far enough right that heading text
+          would land on the blue, so it shrinks to a corner behind the toggle
+          and Map button. Cards may overlap either; they are opaque. */}
+      <div className="split-blue absolute inset-y-0 right-0 hidden w-[var(--blue-width)] [--split-h:100vh] xl:block" />
+      <div className="split-blue absolute right-0 top-0 h-[3.75rem] w-[9.5rem] [--split-h:3.75rem] md:h-16 md:[--split-h:4rem] xl:hidden" />
       <div className="absolute inset-0 -skew-y-12 opacity-[0.07]">
         <div
           className={`absolute inset-y-0 left-0 w-[calc(100%+96px)] ${
@@ -34,7 +42,7 @@ export function BackgroundFX() {
           }`}
           style={{
             backgroundImage:
-              "repeating-linear-gradient(90deg, #2B6FFF 0px, #2B6FFF 2px, transparent 2px, transparent 48px)",
+              "repeating-linear-gradient(90deg, rgb(var(--stripe)) 0px, rgb(var(--stripe)) 2px, transparent 2px, transparent 48px)",
           }}
         />
       </div>

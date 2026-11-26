@@ -1,36 +1,58 @@
+/** Every colour reads a role variable from index.css (RGB channels), so the
+ * /opacity modifiers keep working and <html data-theme> flips all of them. */
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+// A fade variable pulls a translucent class toward opaque per theme: at 1 the
+// alpha is exactly what the class says (dark), below 1 it is raised (light),
+// at 0 the colour is solid. Used where light needs more contrast than the
+// class's alpha gives, without changing the dark classes.
+const faded = (name, fade) =>
+  `rgb(var(--${name}) / calc(1 - (1 - <alpha-value>) * var(--${fade})))`;
+const ink = faded("ink", "ink-fade");
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        // Persona 3 Reload menu palette. Contrast-checked against #0E0E10:
-        // white 17.6:1, white/70 8.9:1, white/50 5.0:1 (floor for body text).
-        // blue and red both fail AA as small text on black, so they are used
-        // for fills, rules, and blocks only — never for body copy.
+        // Role tokens. Prefer these in new code.
+        page: token("page"),
+        surface: token("surface"),
+        raised: token("raised"),
+        line: token("border"),
+        ink: { DEFAULT: ink, muted: token("ink-muted") },
+        accent: {
+          // Blocks, rules, borders, and blue text (4.5:1 in light; see
+          // index.css for the dark-mode exception).
+          DEFAULT: token("accent"),
+          // Fills that carry on-accent text.
+          strong: token("accent-strong"),
+          // Subdued tint for muted edges and wipe bars.
+          tint: token("accent-tint"),
+        },
+        "on-accent": token("on-accent"),
+        // Cyan in light: on the blue side only.
+        highlight: token("highlight"),
+        // Emphasis only: selection underline, one slash per section.
+        danger: token("danger"),
+        focus: token("focus"),
+
+        // Persona 3 Reload names, kept as aliases of the roles above so every
+        // existing class (including App.tsx and the intro, which are not
+        // edited) follows the theme. In light, "black" is the pale ground and
+        // "white" the navy ink.
         "p3-black": {
-          DEFAULT: "#0E0E10",
-          panel: "#16161A",
-          raised: "#1D1D22",
+          DEFAULT: token("page"),
+          panel: token("surface"),
+          raised: token("raised"),
         },
         "p3-blue": {
-          // Non-text blocks, rules, and borders.
-          DEFAULT: "#2B6FFF",
-          // Fills that carry white text — 4.64:1, clears AA where the
-          // brighter #2B6FFF would not (3.98:1).
-          deep: "#1E5FFF",
-          // Tinted surface for subdued panels against the black ground.
-          dark: "#0F2A6B",
+          DEFAULT: token("accent"),
+          deep: token("accent-strong"),
+          dark: token("accent-tint"),
         },
-        "p3-white": {
-          DEFAULT: "#F5F5F0",
-          dim: "#B0B0AD",
-        },
-        // Emphasis only: selection underline, one slash per section. Never
-        // a base or a text colour.
-        "p3-red": {
-          DEFAULT: "#D91E36",
-        },
+        "p3-white": { DEFAULT: ink, dim: token("ink-muted") },
+        "p3-red": { DEFAULT: token("danger") },
       },
       fontFamily: {
         // Persona 3/4 use Fontworks' FOT-Chiaro Std B (display) and
@@ -65,7 +87,7 @@ export default {
         blade: "cubic-bezier(0.65, 0, 0.35, 1)",
       },
       boxShadow: {
-        blade: "6px 6px 0 0 #1E5FFF",
+        blade: "6px 6px 0 0 rgb(var(--accent-strong))",
       },
       keyframes: {
         // Transform, not background-position: only the former is composited.
@@ -86,7 +108,8 @@ export default {
       // fixed rem offsets, so the angle is identical on every element instead
       // of stretching with percentage-based cuts. notch and blade are both
       // exactly 45deg on opposite corners, which keeps their edges parallel.
-      const CUT = "1.25rem";
+      // Container notch: 16px, the size every card and panel uses.
+      const CUT = "1rem";
       const NOTCH = `polygon(0 0, calc(100% - ${CUT}) 0, 100% ${CUT}, 100% 100%, 0 100%)`;
       const BLADE = `polygon(0 0, 100% 0, 100% 100%, ${CUT} 100%, 0 calc(100% - ${CUT}))`;
       const SLICE = "polygon(0 0, calc(100% - 1.5rem) 0, 100% 100%, 0 100%)";
@@ -101,14 +124,14 @@ export default {
         position: "relative",
         isolation: "isolate",
         clipPath: shape,
-        backgroundColor: "var(--edge, #2B6FFF)",
+        backgroundColor: "var(--edge, rgb(var(--border)))",
         "&::before": {
           content: '""',
           position: "absolute",
           inset: "var(--edge-w, 1px)",
           zIndex: "-1",
           clipPath: shape,
-          backgroundColor: "var(--fill, #16161A)",
+          backgroundColor: "var(--fill, rgb(var(--surface)))",
           transition: "background-color 150ms",
         },
       });

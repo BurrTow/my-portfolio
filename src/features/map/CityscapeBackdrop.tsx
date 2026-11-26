@@ -132,13 +132,13 @@ export function CityscapeBackdrop({
           <Art>
             <defs>
               <linearGradient id="cb-sky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0D255E" />
-                <stop offset="55%" stopColor="#0E1020" />
-                <stop offset="100%" stopColor="#0E0E10" />
+                <stop offset="0%" style={{ stopColor: "var(--cb-sky-top)" }} />
+                <stop offset="55%" style={{ stopColor: "var(--cb-sky-mid)" }} />
+                <stop offset="100%" style={{ stopColor: "rgb(var(--page))" }} />
               </linearGradient>
             </defs>
             <rect width="1200" height="800" fill="url(#cb-sky)" />
-            <g opacity="0.08" fill="#2B6FFF">
+            <g opacity="0.08" style={{ fill: "rgb(var(--accent))" }}>
               <polygon points="120,0 260,0 60,800 -80,800" />
               <polygon points="700,0 760,0 560,800 500,800" />
               <polygon points="1080,0 1200,0 1000,800 880,800" />
@@ -149,7 +149,7 @@ export function CityscapeBackdrop({
         {/* 2 — far skyline: lightest, bluest, lowest contrast. */}
         <Plane depth={PLANES.far} px={sx} py={sy} mode={mode}>
           <Art>
-            <g fill="#2B4C8C" opacity="0.3">
+            <g opacity="0.3" style={{ fill: "var(--cb-far)" }}>
               <polygon points="40,372 118,372 130,386 130,800 40,800" />
               <rect x="150" y="410" width="70" height="390" />
               <polygon points="250,348 348,348 360,362 360,800 250,800" />
@@ -168,8 +168,8 @@ export function CityscapeBackdrop({
           <Art>
             <defs>
               <linearGradient id="cb-mid" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#16264E" />
-                <stop offset="100%" stopColor="#0B1022" />
+                <stop offset="0%" style={{ stopColor: "var(--cb-mid-top)" }} />
+                <stop offset="100%" style={{ stopColor: "var(--cb-mid-bottom)" }} />
               </linearGradient>
               <pattern
                 id="cb-win-m"
@@ -182,8 +182,8 @@ export function CityscapeBackdrop({
                   y="6"
                   width="4"
                   height="6"
-                  fill="#2B6FFF"
                   fillOpacity="0.22"
+                  style={{ fill: "rgb(var(--accent))" }}
                 />
               </pattern>
             </defs>
@@ -237,8 +237,8 @@ export function CityscapeBackdrop({
                 y="458"
                 width="24"
                 height="30"
-                fill="#D91E36"
                 opacity="0.8"
+                style={{ fill: "rgb(var(--danger))" }}
               />
             </g>
           </Art>
@@ -250,8 +250,8 @@ export function CityscapeBackdrop({
           <Art>
             <defs>
               <linearGradient id="cb-near" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0C1730" />
-                <stop offset="100%" stopColor="#05070E" />
+                <stop offset="0%" style={{ stopColor: "var(--cb-near-top)" }} />
+                <stop offset="100%" style={{ stopColor: "var(--cb-near-bottom)" }} />
               </linearGradient>
               <pattern
                 id="cb-win-n"
@@ -264,8 +264,8 @@ export function CityscapeBackdrop({
                   y="7"
                   width="5"
                   height="7"
-                  fill="#2B6FFF"
                   fillOpacity="0.3"
+                  style={{ fill: "rgb(var(--accent))" }}
                 />
               </pattern>
             </defs>
@@ -277,7 +277,7 @@ export function CityscapeBackdrop({
               />
               <polygon
                 points="170,604 196,620 196,800 170,800"
-                fill="#03050A"
+                style={{ fill: "var(--cb-side)" }}
               />
 
               <polygon
@@ -293,7 +293,7 @@ export function CityscapeBackdrop({
               />
               <polygon
                 points="595,629 621,645 621,800 595,800"
-                fill="#03050A"
+                style={{ fill: "var(--cb-side)" }}
               />
 
               <polygon
@@ -309,7 +309,7 @@ export function CityscapeBackdrop({
               />
               <polygon
                 points="1010,565 1010,584 984,600 984,800 1010,800"
-                fill="#03050A"
+                style={{ fill: "var(--cb-side)" }}
               />
             </g>
           </Art>
@@ -319,7 +319,7 @@ export function CityscapeBackdrop({
         {/* 5 — foreground silhouettes framing left, right and the street. */}
         <Plane depth={PLANES.fore} px={sx} py={sy} mode={mode}>
           <Art>
-            <g fill="#05070C">
+            <g style={{ fill: "var(--cb-fore)" }}>
               <polygon points="0,470 70,470 92,492 92,800 0,800" />
               <polygon points="1200,430 1130,430 1108,452 1108,800 1200,800" />
               <rect x="0" y="770" width="1200" height="30" />
@@ -338,13 +338,13 @@ export function CityscapeBackdrop({
       >
         <defs>
           <linearGradient id="cb-fog" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#2B6FFF" stopOpacity="0" />
-            <stop offset="70%" stopColor="#16264F" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#0E0E10" stopOpacity="0.85" />
+            <stop offset="0%" stopOpacity="0" style={{ stopColor: "rgb(var(--accent))" }} />
+            <stop offset="70%" stopOpacity="0.4" style={{ stopColor: "var(--cb-fog)" }} />
+            <stop offset="100%" stopOpacity="0.85" style={{ stopColor: "rgb(var(--page))" }} />
           </linearGradient>
           <radialGradient id="cb-vig" cx="50%" cy="48%" r="72%">
-            <stop offset="55%" stopColor="#0E0E10" stopOpacity="0" />
-            <stop offset="100%" stopColor="#0E0E10" stopOpacity="0.55" />
+            <stop offset="55%" stopOpacity="0" style={{ stopColor: "rgb(var(--page))" }} />
+            <stop offset="100%" stopOpacity="0.55" style={{ stopColor: "rgb(var(--page))" }} />
           </radialGradient>
         </defs>
         <rect x="0" y="520" width="1200" height="280" fill="url(#cb-fog)" />
@@ -354,8 +354,8 @@ export function CityscapeBackdrop({
           y1="726"
           x2="1200"
           y2="726"
-          stroke="#2B6FFF"
           strokeOpacity="0.18"
+          style={{ stroke: "rgb(var(--accent))" }}
           strokeWidth="2"
         />
       </svg>

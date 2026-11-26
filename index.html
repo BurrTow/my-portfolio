@@ -4,6 +4,32 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0E0E10" />
+    <!--
+      Theme before first paint, so a light-mode visitor never sees a dark frame.
+      Same key and colours as src/store/useThemeStore.ts. Storage can throw
+      (private window, blocked site data); that falls through to the OS
+      preference, and dark unless the OS explicitly asks for light.
+    -->
+    <script>
+      (function () {
+        var t;
+        try {
+          t = localStorage.getItem("portfolio:theme");
+        } catch (e) {}
+        if (t !== "light" && t !== "dark") {
+          t =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+        }
+        document.documentElement.setAttribute("data-theme", t);
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute("content", t === "light" ? "#F3F7FA" : "#0E0E10");
+      })();
+    </script>
     <meta
       name="description"
       content="Personal portfolio — Persona 3 Reload-styled menu interface."
