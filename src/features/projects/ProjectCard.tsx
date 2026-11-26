@@ -33,14 +33,16 @@ export function ProjectCard({
         {project.thumbnail ? (
           // alt="" — the title sits right below and the card already has an
           // aria-label, so announcing this too would just be noise.
-          <img
-            src={project.thumbnail}
-            alt=""
-            width={800}
-            height={450}
-            loading="lazy"
-            className="mb-4 aspect-video w-full border border-p3-blue/25 bg-p3-black object-cover"
-          />
+          <div className="mb-4 overflow-hidden border border-p3-blue/25 bg-p3-black">
+            <img
+              src={project.thumbnail}
+              alt=""
+              width={800}
+              height={450}
+              loading="lazy"
+              className="card-pop-img aspect-video w-full object-cover"
+            />
+          </div>
         ) : (
           <div className="mb-4 flex aspect-video items-center justify-center border border-p3-blue/25 bg-p3-black font-ui text-xs uppercase tracking-widest text-p3-white/40">
             Screenshot

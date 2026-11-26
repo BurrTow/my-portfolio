@@ -12,6 +12,25 @@
   }
 }
 
+/* Whole-card hover lift (Card `pop`). Transform only, so neighbours never
+   shift; growth (~7px a side at 1.03) stays inside SliceTransition's 2% clip
+   margin and the 1.25rem grid gap. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card-pop {
+    transition: transform 150ms ease-out;
+  }
+  .card-pop:hover {
+    transform: translateY(-4px) scale(1.03);
+    z-index: 10;
+  }
+  .card-pop .card-pop-img {
+    transition: transform 200ms ease-out;
+  }
+  .card-pop:hover .card-pop-img {
+    transform: scale(1.05);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

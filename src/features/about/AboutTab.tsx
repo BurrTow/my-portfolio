@@ -17,7 +17,7 @@ export function AboutTab() {
         className="grid grid-cols-1 gap-5"
       >
         <motion.div variants={staggerItem}>
-          <Card className="cursor-default">
+          <Card pop={false} className="cursor-default">
             {/* Stacks on a phone so the emblem never squeezes the bio into a
                 narrow column. */}
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
@@ -44,7 +44,7 @@ export function AboutTab() {
         </motion.div>
 
         <motion.div variants={staggerItem}>
-          <Card className="cursor-default">
+          <Card pop={false} className="cursor-default">
             <h3 className="font-display text-lg font-bold text-p3-white">
               Contact
             </h3>
